@@ -1,0 +1,159 @@
+{
+  "test_rows": 56746,
+  "test_frauds": 74,
+  "test_base_rate": 0.0013040566735981391,
+  "ranking": [
+    {
+      "model": "GMM",
+      "pr_auc_trapezoidal": 0.14961945471947027,
+      "average_precision": 0.1531680941494858,
+      "precision_at_100": 0.29,
+      "frauds_at_100": 29
+    },
+    {
+      "model": "PCA8",
+      "pr_auc_trapezoidal": 0.07124422220627896,
+      "average_precision": 0.07294909588643132,
+      "precision_at_100": 0.06,
+      "frauds_at_100": 6
+    },
+    {
+      "model": "plain_ae",
+      "pr_auc_trapezoidal": 0.12809835878728434,
+      "average_precision": 0.13116870195859226,
+      "precision_at_100": 0.22,
+      "frauds_at_100": 22
+    },
+    {
+      "model": "denoising_ae",
+      "pr_auc_trapezoidal": 0.13081696790179195,
+      "average_precision": 0.13382085776753097,
+      "precision_at_100": 0.24,
+      "frauds_at_100": 24
+    },
+    {
+      "model": "wide_ae",
+      "pr_auc_trapezoidal": 0.10436309304936163,
+      "average_precision": 0.10680070498307294,
+      "precision_at_100": 0.13,
+      "frauds_at_100": 13
+    },
+    {
+      "model": "seed43_ae",
+      "pr_auc_trapezoidal": 0.0915395899446469,
+      "average_precision": 0.09379184447818695,
+      "precision_at_100": 0.12,
+      "frauds_at_100": 12
+    },
+    {
+      "model": "Hybrid",
+      "pr_auc_trapezoidal": 0.14122301281021654,
+      "average_precision": 0.14452530832329324,
+      "precision_at_100": 0.25,
+      "frauds_at_100": 25
+    }
+  ],
+  "default_policy": [
+    {
+      "model": "GMM",
+      "validation_budget": 0.005,
+      "cutoff": 75.89417148617439,
+      "tn": 56500,
+      "fp": 172,
+      "fn": 37,
+      "tp": 37,
+      "test_recall": 0.5,
+      "test_precision": 0.17703349282296652,
+      "test_fpr": 0.0030350084697910785,
+      "alerts": 209
+    },
+    {
+      "model": "PCA8",
+      "validation_budget": 0.005,
+      "cutoff": 11.474047919455115,
+      "tn": 56521,
+      "fp": 151,
+      "fn": 55,
+      "tp": 19,
+      "test_recall": 0.25675675675675674,
+      "test_precision": 0.11176470588235295,
+      "test_fpr": 0.002664455110107284,
+      "alerts": 170
+    },
+    {
+      "model": "plain_ae",
+      "validation_budget": 0.005,
+      "cutoff": 6.028501987457275,
+      "tn": 56545,
+      "fp": 127,
+      "fn": 41,
+      "tp": 33,
+      "test_recall": 0.44594594594594594,
+      "test_precision": 0.20625,
+      "test_fpr": 0.0022409655561829475,
+      "alerts": 160
+    },
+    {
+      "model": "denoising_ae",
+      "validation_budget": 0.005,
+      "cutoff": 5.952805995941162,
+      "tn": 56535,
+      "fp": 137,
+      "fn": 41,
+      "tp": 33,
+      "test_recall": 0.44594594594594594,
+      "test_precision": 0.19411764705882353,
+      "test_fpr": 0.0024174195369847545,
+      "alerts": 170
+    },
+    {
+      "model": "wide_ae",
+      "validation_budget": 0.005,
+      "cutoff": 7.90987491607666,
+      "tn": 56535,
+      "fp": 137,
+      "fn": 46,
+      "tp": 28,
+      "test_recall": 0.3783783783783784,
+      "test_precision": 0.1696969696969697,
+      "test_fpr": 0.0024174195369847545,
+      "alerts": 165
+    },
+    {
+      "model": "seed43_ae",
+      "validation_budget": 0.005,
+      "cutoff": 7.117588520050049,
+      "tn": 56514,
+      "fp": 158,
+      "fn": 47,
+      "tp": 27,
+      "test_recall": 0.36486486486486486,
+      "test_precision": 0.14594594594594595,
+      "test_fpr": 0.002787972896668549,
+      "alerts": 185
+    },
+    {
+      "model": "Hybrid",
+      "validation_budget": 0.005,
+      "cutoff": 4.482096956146078,
+      "tn": 56540,
+      "fp": 132,
+      "fn": 39,
+      "tp": 35,
+      "test_recall": 0.47297297297297297,
+      "test_precision": 0.20958083832335328,
+      "test_fpr": 0.002329192546583851,
+      "alerts": 167
+    }
+  ],
+  "hybrid_minus_ae_ap_paired_bootstrap_95pct": [
+    0.006029385947447785,
+    0.017710688488908624
+  ],
+  "bootstrap_replicates": 200,
+  "bootstrap_scope": "Stratified rows; no refitting or temporal dependence",
+  "test_reused_from_phase1": true,
+  "test_used_for_phase2_tuning": false,
+  "gmm_matches_phase1": true,
+  "all_validation_fpr_budgets_pass": true
+}

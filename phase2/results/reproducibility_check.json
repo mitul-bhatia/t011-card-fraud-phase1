@@ -1,0 +1,24 @@
+{
+  "all_ranking_metrics_reproduced": true,
+  "absolute_tolerance": 1e-09,
+  "dataset": "Same verified official CSV; SHA-256 checked by notebook 01",
+  "settings_changed_after_test": false,
+  "layout": "phase1/ and phase2/ with one root index.html",
+  "fresh_environment_install": "requirements.txt installed successfully from cached packages",
+  "full_portable_execution": "all ten main notebooks passed, each in a fresh process",
+  "dataset_path": "phase1/data/raw/creditcard.csv",
+  "phase1_and_phase2_metrics_reproduced": true,
+  "homepage_http_links_passed": 44,
+  "browser_visual_preview_verified": false,
+  "browser_preview_limitation": "Native Chrome loads the pages; browser automation host unavailable and screenshots fail with ScreenCaptureKit error -3811",
+  "earlier_phase2_only_fallback_test": {
+    "fresh_copy_execution": "all five notebooks succeeded in separate processes",
+    "local_gmm_binary_available": false,
+    "gmm_rebuilt": true
+  },
+  "latest_main_notebook_rerun_date_ist": "2026-11-07",
+  "browser_native_chrome_page_load_checked": [
+    "index.html",
+    "phase2/output/notebooks/03_Autoencoder_Training.html"
+  ]
+}

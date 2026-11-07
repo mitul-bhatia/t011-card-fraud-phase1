@@ -1,0 +1,6 @@
+-r ../phase1/requirements.txt
+torch==2.6.0
+ipython>=8.18,<9
+nbformat>=5.10,<6
+nbconvert>=7.16,<8
+pypdf>=6,<7

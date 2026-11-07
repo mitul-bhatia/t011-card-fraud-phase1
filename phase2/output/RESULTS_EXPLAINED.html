@@ -1,0 +1,151 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RESULTS EXPLAINED</title><style>body{max-width:1000px;margin:40px auto;padding:0 24px;font:17px/1.65 system-ui,sans-serif;color:#183243;background:#fafbf9}h1{font-size:36px;line-height:1.2}h2{margin-top:2em;font-size:25px}h3{margin-top:1.7em}a{color:#155c8a}table{border-collapse:collapse;width:100%;font-size:15px}td,th{padding:10px;border-bottom:1px solid #d4dde2;text-align:left}th{background:#e7eef1}code,pre{font-family:ui-monospace,monospace;background:#edf1f3}pre{padding:18px;overflow:auto}img{max-width:100%}li{margin:7px 0}@media print{body{margin:0;font-size:11pt}a{color:inherit}h2,h3{break-after:avoid}tr{break-inside:avoid}}</style><body><p><a href="../../index.html#phase2">Project home</a></p><h1>Results explained simply</h1>
+<p>These are measured results from the real dataset. The GMM is the frozen Phase 1 baseline. The same later test period has <strong>56,746 transactions and 74 frauds</strong>, a fraud base rate of <strong>0.1304%</strong>. The test benchmark was already exposed in Phase 1; Phase 2 settings were fixed without using its labels for tuning.</p>
+<h2>Which method gives the best ranking?</h2>
+<table>
+<thead>
+<tr>
+  <th>Model</th>
+  <th style="text-align:right">PR AUC (trapezoidal)</th>
+  <th style="text-align:right">AP</th>
+  <th style="text-align:right">Frauds in 100 reviews</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>GMM</td>
+  <td style="text-align:right">0.1496</td>
+  <td style="text-align:right">0.1532</td>
+  <td style="text-align:right">29</td>
+</tr>
+<tr>
+  <td>Denoising AE</td>
+  <td style="text-align:right">0.1308</td>
+  <td style="text-align:right">0.1338</td>
+  <td style="text-align:right">24</td>
+</tr>
+<tr>
+  <td>Hybrid</td>
+  <td style="text-align:right">0.1412</td>
+  <td style="text-align:right">0.1445</td>
+  <td style="text-align:right">25</td>
+</tr>
+</tbody>
+</table>
+<p>The GMM gives the strongest ranking here. The hybrid improves the AE result but does not beat the GMM on PR AUC, AP or precision at 100. All three rankings find substantially more fraud in the first 100 reviews than the approximately <strong>0.13 frauds expected from 100 random reviews</strong>. This is a dataset comparison, not a deployment guarantee.</p>
+<h2>What happens at the default 0.5% validation FPR policy?</h2>
+<table>
+<thead>
+<tr>
+  <th>Model</th>
+  <th style="text-align:right">Fraud found / 74</th>
+  <th style="text-align:right">False alerts</th>
+  <th style="text-align:right">Total reviews</th>
+  <th style="text-align:right">Recall</th>
+  <th style="text-align:right">Precision</th>
+  <th style="text-align:right">Actual test FPR</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>GMM</td>
+  <td style="text-align:right">37</td>
+  <td style="text-align:right">172</td>
+  <td style="text-align:right">209</td>
+  <td style="text-align:right">50.00%</td>
+  <td style="text-align:right">17.70%</td>
+  <td style="text-align:right">0.3035%</td>
+</tr>
+<tr>
+  <td>Denoising AE</td>
+  <td style="text-align:right">33</td>
+  <td style="text-align:right">137</td>
+  <td style="text-align:right">170</td>
+  <td style="text-align:right">44.59%</td>
+  <td style="text-align:right">19.41%</td>
+  <td style="text-align:right">0.2417%</td>
+</tr>
+<tr>
+  <td>Hybrid</td>
+  <td style="text-align:right">35</td>
+  <td style="text-align:right">132</td>
+  <td style="text-align:right">167</td>
+  <td style="text-align:right">47.30%</td>
+  <td style="text-align:right">20.96%</td>
+  <td style="text-align:right">0.2329%</td>
+</tr>
+</tbody>
+</table>
+<p>Compared with the GMM at this predeclared validation policy, the hybrid makes <strong>40 fewer false alerts (23.3% fewer)</strong> and catches <strong>2 fewer frauds</strong>. Its higher precision comes with lower recall. These are the same <em>validation target</em>, not identical realized test FPRs or identical review counts. The top-100 comparison above is the equal-review-count comparison.</p>
+<p>Compared with the AE, the hybrid catches <strong>2 more frauds</strong> and creates <strong>5 fewer false alerts</strong> at this policy. That is evidence of a local benefit over the DL branch, while the GMM remains stronger on the overall ranking measures.</p>
+<p>At the relaxed 1% validation policy, all three find 52 frauds. GMM makes 381 false alerts, AE 314, hybrid 304. At the strict 0.1% policy, GMM finds 6 frauds while AE and hybrid find 0. These differences show why one headline metric is insufficient.</p>
+<h2>What did the ablations teach us?</h2>
+<table>
+<thead>
+<tr>
+  <th>Model</th>
+  <th style="text-align:right">PR AUC (trapezoidal)</th>
+  <th style="text-align:right">AP</th>
+  <th style="text-align:right">Frauds in 100 reviews</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>GMM</td>
+  <td style="text-align:right">0.1496</td>
+  <td style="text-align:right">0.1532</td>
+  <td style="text-align:right">29</td>
+</tr>
+<tr>
+  <td>PCA (8 components)</td>
+  <td style="text-align:right">0.0712</td>
+  <td style="text-align:right">0.0729</td>
+  <td style="text-align:right">6</td>
+</tr>
+<tr>
+  <td>Plain AE</td>
+  <td style="text-align:right">0.1281</td>
+  <td style="text-align:right">0.1312</td>
+  <td style="text-align:right">22</td>
+</tr>
+<tr>
+  <td>Denoising AE</td>
+  <td style="text-align:right">0.1308</td>
+  <td style="text-align:right">0.1338</td>
+  <td style="text-align:right">24</td>
+</tr>
+<tr>
+  <td>Denoising AE, bottleneck 12</td>
+  <td style="text-align:right">0.1044</td>
+  <td style="text-align:right">0.1068</td>
+  <td style="text-align:right">13</td>
+</tr>
+<tr>
+  <td>Denoising AE, seed 43</td>
+  <td style="text-align:right">0.0915</td>
+  <td style="text-align:right">0.0938</td>
+  <td style="text-align:right">12</td>
+</tr>
+<tr>
+  <td>Hybrid</td>
+  <td style="text-align:right">0.1412</td>
+  <td style="text-align:right">0.1445</td>
+  <td style="text-align:right">25</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>Noise:</strong> Denoising modestly improves PR AUC from 0.1281 to 0.1308 and finds 24 rather than 22 frauds in the top 100. At the default policy both catch 33, and the plain AE makes fewer false alerts (127 vs 137). Noise does not improve every measure.</li>
+<li><strong>Compression:</strong> The 12-unit bottleneck lowers normal-validation MSE to 0.6599 from 0.7130, yet reduces test PR AUC to 0.1044. Better copying of normal transactions does not guarantee better fraud ranking.</li>
+<li><strong>Randomness:</strong> Seed 43 reduces the denoising AE's PR AUC to 0.0915 and top-100 frauds to 12. The model is sensitive to initialization and batch order. We retain the declared seed 42 main result and disclose the weaker run.</li>
+<li><strong>Linear reconstruction:</strong> PCA8 reaches PR AUC 0.0712 and finds 6 frauds in 100 reviews. The tested nonlinear AE is better here, although the fitting methods and parameterizations differ.</li>
+<li><strong>Hybrid branches:</strong> Removing the AE leaves the GMM, which is the best overall ranking model. Removing the GMM leaves the weaker AE. This combination has a measured trade-off, not universal superiority.</li>
+</ul>
+<h2>Why does the hybrid fail to beat the GMM at 100 reviews?</h2>
+<p>The GMM and AE score ranks have Spearman correlation <strong>0.746</strong>. All <strong>24</strong> frauds found by the AE in its top 100 are already among the GMM's <strong>29</strong> detected frauds at that capacity. The AE contributes <strong>0 unique frauds</strong> there, while the GMM contributes <strong>5 unique frauds</strong>. Equal averaging changes the order and loses some of the GMM's advantage. This overlap is specific to the top-100 policy; it does not prove there are no complementary cases at other thresholds.</p>
+<h2>How certain is the comparison?</h2>
+<p>A 200-replicate paired, stratified row bootstrap gives a 95% percentile interval of <strong>[0.0060, 0.0177]</strong> for hybrid AP minus main-AE AP. This describes sampling variation conditional on these fitted models and the observed class counts. It ignores temporal dependence, training variation and benchmark reuse. The large seed effect is a reason to avoid a broad superiority claim.</p>
+<h2>Training actually observed</h2>
+<p>Both the plain and main denoising AE reach the 30-epoch cap and restore epoch 30. The wide model stops at epoch 15 and restores epoch 10. Seed 43 reaches epoch 30 and restores epoch 28. We do not claim early stopping fired on every run.</p>
+<h2>A defensible viva conclusion</h2>
+<p>“We implemented and evaluated both density and nonlinear reconstruction scoring. The GMM ranks fraud best on this reused benchmark. The hybrid improves the AE and can reduce false alerts relative to the GMM at declared validation policies, with a recall cost at the default policy. Our ablations show that better reconstruction and a larger bottleneck do not automatically produce better anomaly detection.”</p>
+</body></html>

@@ -1,0 +1,68 @@
+{
+  "architecture": [
+    29,
+    16,
+    8,
+    16,
+    29
+  ],
+  "optimizer": "Adam",
+  "learning_rate": 0.001,
+  "weight_decay": 1e-05,
+  "batch_size": 1024,
+  "max_epochs": 30,
+  "patience": 5,
+  "min_delta": 0.0001,
+  "training_rows": 169893,
+  "validation_normal_rows": 56688,
+  "device": "cpu",
+  "selection": "normal validation MSE only",
+  "main_model": "denoising_ae",
+  "runs": [
+    {
+      "name": "plain_ae",
+      "bottleneck": 8,
+      "noise": 0.0,
+      "seed": 42,
+      "parameters": 1253,
+      "best_epoch": 30,
+      "epochs_run": 30,
+      "best_normal_validation_mse": 0.7119136452674866,
+      "seconds": 9.14607770802104
+    },
+    {
+      "name": "denoising_ae",
+      "bottleneck": 8,
+      "noise": 0.1,
+      "seed": 42,
+      "parameters": 1253,
+      "best_epoch": 30,
+      "epochs_run": 30,
+      "best_normal_validation_mse": 0.7129748463630676,
+      "seconds": 9.125801291986136
+    },
+    {
+      "name": "wide_ae",
+      "bottleneck": 12,
+      "noise": 0.1,
+      "seed": 42,
+      "parameters": 1385,
+      "best_epoch": 10,
+      "epochs_run": 15,
+      "best_normal_validation_mse": 0.6599397659301758,
+      "seconds": 4.760824249999132
+    },
+    {
+      "name": "seed43_ae",
+      "bottleneck": 8,
+      "noise": 0.1,
+      "seed": 43,
+      "parameters": 1253,
+      "best_epoch": 28,
+      "epochs_run": 30,
+      "best_normal_validation_mse": 0.684485137462616,
+      "seconds": 9.85046291598701
+    }
+  ],
+  "torch_version": "2.6.0"
+}

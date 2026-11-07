@@ -1,0 +1,291 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LAST DAY STUDY GUIDE</title><style>body{max-width:1000px;margin:40px auto;padding:0 24px;font:17px/1.65 system-ui,sans-serif;color:#183243;background:#fafbf9}h1{font-size:36px;line-height:1.2}h2{margin-top:2em;font-size:25px}h3{margin-top:1.7em}a{color:#155c8a}table{border-collapse:collapse;width:100%;font-size:15px}td,th{padding:10px;border-bottom:1px solid #d4dde2;text-align:left}th{background:#e7eef1}code,pre{font-family:ui-monospace,monospace;background:#edf1f3}pre{padding:18px;overflow:auto}img{max-width:100%}li{margin:7px 0}@media print{body{margin:0;font-size:11pt}a{color:inherit}h2,h3{break-after:avoid}tr{break-inside:avoid}}</style><body><p><a href="../../index.html#phase2">Project home</a></p><h1>Learn the whole project in one revision session</h1>
+<p>Team T011, Section A, Project 26. Use this with the executed notebooks and the measured results in <code>../results/</code>. The aim is understanding. Reading this once cannot guarantee viva readiness.</p>
+<h2>A practical three-hour revision plan</h2>
+<table>
+<thead>
+<tr>
+  <th>Time</th>
+  <th>Work</th>
+  <th>Check yourself</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>0-20 min</td>
+  <td>Read notebook 00 and this guide through the architecture explanation</td>
+  <td>Explain the project without using the word accuracy</td>
+</tr>
+<tr>
+  <td>20-45 min</td>
+  <td>Read notebooks 01 and 02 and their plots</td>
+  <td>Explain which rows fit the scaler and why</td>
+</tr>
+<tr>
+  <td>45-85 min</td>
+  <td>Read notebook 03 slowly</td>
+  <td>Explain every line of the training loop in your own words</td>
+</tr>
+<tr>
+  <td>85-115 min</td>
+  <td>Read notebook 04 and the results summary</td>
+  <td>Calculate precision, recall and FPR from one confusion matrix</td>
+</tr>
+<tr>
+  <td>115-145 min</td>
+  <td>Rehearse the presentation using its speaker notes</td>
+  <td>Explain where the hybrid helps and where it loses</td>
+</tr>
+<tr>
+  <td>145-180 min</td>
+  <td>Each member answers five questions aloud and demonstrates their notebook</td>
+  <td>Let another member ask a follow-up question</td>
+</tr>
+</tbody>
+</table>
+<h2>The 30-second explanation</h2>
+<p>We prioritize card transactions for human review. Both models learn from the same earlier legitimate transactions. The GMM scores how unlikely a transaction looks under a density model. The autoencoder compresses and rebuilds it, then scores reconstruction error. Our hybrid combines normalized versions of both scores. We compare fraud ranking and the cost of false alerts on the same later test period.</p>
+<p>An anomaly means unusual under a model. It does not prove fraud. This system orders a review queue; it does not automatically block cards.</p>
+<h2>The data, without jargon</h2>
+<ul>
+<li>A row is one transaction. <code>Class</code> gives the known answer: 0 legitimate, 1 fraud.</li>
+<li>V1-V28 are anonymous features created by the provider using PCA. We cannot recover their business meaning.</li>
+<li><code>Amount</code> is the transaction amount. <code>Time</code> orders transactions by elapsed seconds.</li>
+<li>There are 284,807 original rows and 492 frauds. Removing 1,081 exact repeats leaves 283,726 rows and 473 frauds.</li>
+<li>Exact repeats might be genuine transactions because there are no transaction IDs. We retain Phase 1's removal assumption and disclose it.</li>
+<li>Earliest 60%: training, 170,235 rows with 342 frauds. Only its 169,893 legitimate rows fit the models.</li>
+<li>Next 20%: validation, 56,745 rows with 57 frauds. Legitimate validation rows control AE stopping, score normalization and thresholds.</li>
+<li>Last 20%: test, 56,746 rows with 74 frauds. Its fraud base rate is about 0.1304%.</li>
+</ul>
+<p>Training learns the parameters. Validation controls choices before evaluation. Test measures later performance. Phase 1 already exposed this exact test benchmark, so we disclose its reuse rather than claiming a newly blind evaluation.</p>
+<h2>Features: what enters both models?</h2>
+<p>Twenty-eight anonymous features plus <code>LogAmount = log(1 + Amount)</code> give 29 inputs. The log compresses very large amounts and safely handles zero. StandardScaler learns the mean and standard deviation from legitimate training rows only, then applies those same values everywhere.</p>
+<p>For one feature, <code>scaled = (value - training_mean) / training_std</code>. A value one standard deviation above the training mean becomes 1. A value one standard deviation below becomes -1.</p>
+<p>Class never enters the model. Time determines the split but does not enter the model. We do not add extra engineered features only for DL, because that would complicate the model comparison.</p>
+<h2>Why the GMM comes first</h2>
+<p>A Gaussian describes a bell-shaped pattern with a center and spread. A mixture combines several such patterns. The mixture weights sum to one. K is the number of components, not the number of fraud categories.</p>
+<p>EM alternates two steps. In the E-step it estimates how strongly each transaction belongs to each component. In the M-step it updates the centers, spreads and mixture weights using those memberships. It repeats until the fit changes little enough or reaches its iteration limit. Convergence does not prove a global optimum.</p>
+<p>We tested K=1,2,4,8 in Phase 1. AIC and BIC reward fit and penalize additional parameters; lower is better. K=8 has the smallest training BIC in this tested grid. The criterion still falls at the grid edge, so we do not claim that 8 is globally optimal.</p>
+<p><code>GMM score = -log p(x)</code>. High score means low density under learned normal activity. Density is not probability of fraud. A density can exceed one, so negative log density can be negative.</p>
+<p>Diagonal covariance estimates a separate variance per feature within a component. It improves speed and reduces parameter count. It ignores within-component cross-feature covariance, although mixtures can still represent some overall dependencies.</p>
+<h2>Why add a neural network?</h2>
+<p>The GMM imposes a mixture of Gaussian shapes. The AE learns a nonlinear reconstruction function that may capture different relationships. This gives a second way to measure unusual activity. A second model is useful only if its scores improve an evaluation measure that matters.</p>
+<p>A supervised fraud classifier learns a mapping from inputs to a fraud label. Our AE learns a mapping from normal inputs back to those same inputs. We need known legitimate labels to filter training data, so the overall setup is commonly called one-class or semi-supervised anomaly detection. Its weight-training objective does not use fraud targets.</p>
+<h2>The architecture, layer by layer</h2>
+<table>
+<thead>
+<tr>
+  <th>Layer</th>
+  <th style="text-align:right">Width</th>
+  <th>Plain meaning</th>
+  <th>Why it is here</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Input</td>
+  <td style="text-align:right">29</td>
+  <td>The scaled transaction features</td>
+  <td>Same information as the GMM</td>
+</tr>
+<tr>
+  <td>Encoder hidden</td>
+  <td style="text-align:right">16</td>
+  <td>Learned combinations of the inputs</td>
+  <td>Starts compression</td>
+</tr>
+<tr>
+  <td>Bottleneck</td>
+  <td style="text-align:right">8</td>
+  <td>A short learned representation</td>
+  <td>Limits capacity and forces information loss</td>
+</tr>
+<tr>
+  <td>Decoder hidden</td>
+  <td style="text-align:right">16</td>
+  <td>Expands the short representation</td>
+  <td>Starts rebuilding</td>
+</tr>
+<tr>
+  <td>Output</td>
+  <td style="text-align:right">29</td>
+  <td>Reconstructed feature values</td>
+  <td>Compare with the original input</td>
+</tr>
+</tbody>
+</table>
+<p>Each Linear layer computes weighted sums plus biases. Each hidden ReLU computes <code>max(0, value)</code>, which adds nonlinearity. The output stays linear because inputs are standardized real numbers, including negatives. A sigmoid would restrict outputs to 0-1 and would not match these targets.</p>
+<p>The 8-unit bottleneck is undercomplete because 8 is less than 29. It discourages an identity map, but does not prevent the network from reconstructing fraud. The main network has 1,253 trainable parameters. Verify the exact count in notebook 03 rather than memorizing an unsupported number.</p>
+<h2>A denoising AE, with a tiny example</h2>
+<p>We add small Gaussian noise to each training input. If a clean value is 1.00, its noisy input might be 1.08. The target stays 1.00. The model learns to recover a clean normal transaction from a slightly perturbed version.</p>
+<p>Noise standard deviation 0.10 is measured in standardized feature units. The main experiment fixes it before test evaluation. No noise is added when computing validation or test anomaly scores.</p>
+<p>If the input is <code>[1, 2]</code> and reconstruction is <code>[1.1, 1.8]</code>, squared errors are 0.01 and 0.04. Their mean is 0.025. In the real model, average over 29 features. This is reconstruction MSE. The training loss averages it over the batch as well.</p>
+<h2>Every important line of the training loop</h2>
+<table>
+<thead>
+<tr>
+  <th>Code idea</th>
+  <th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>model.train()</code></td>
+  <td>Put the model in training mode; mode matters for layers such as dropout if used</td>
+</tr>
+<tr>
+  <td>Batch size 1024</td>
+  <td>Use 1,024 transactions for one optimizer update</td>
+</tr>
+<tr>
+  <td><code>noisy = clean + noise * randn_like(clean)</code></td>
+  <td>Corrupt only the input</td>
+</tr>
+<tr>
+  <td><code>optimizer.zero_grad()</code></td>
+  <td>Clear gradients from the previous batch</td>
+</tr>
+<tr>
+  <td><code>rebuilt = model(noisy)</code></td>
+  <td>Forward pass through encoder and decoder</td>
+</tr>
+<tr>
+  <td><code>MSELoss(rebuilt, clean)</code></td>
+  <td>Compare the output with the clean target</td>
+</tr>
+<tr>
+  <td><code>loss.backward()</code></td>
+  <td>Apply the chain rule to compute gradients</td>
+</tr>
+<tr>
+  <td><code>optimizer.step()</code></td>
+  <td>Adam changes the trainable weights using those gradients</td>
+</tr>
+<tr>
+  <td>One epoch</td>
+  <td>One full pass over the training rows</td>
+</tr>
+<tr>
+  <td><code>model.eval()</code></td>
+  <td>Put the model in evaluation mode</td>
+</tr>
+<tr>
+  <td><code>torch.no_grad()</code></td>
+  <td>Avoid recording gradients during scoring</td>
+</tr>
+<tr>
+  <td>Best-state copy</td>
+  <td>Keep the weights at the best accepted normal-validation loss</td>
+</tr>
+<tr>
+  <td>Early stopping</td>
+  <td>Stop after five epochs without improvement of at least 0.0001, or after 30 epochs</td>
+</tr>
+</tbody>
+</table>
+<p>Learning rate 0.001 controls update size. Weight decay 0.00001 discourages large weights. Noise, compression and early stopping provide other regularization. We did not add dropout, convolution, recurrence, or attention: these 29 tabular features do not supply an image grid or a transaction sequence.</p>
+<p><code>eval()</code> does not itself disable gradients; <code>no_grad()</code> does. The clean training and validation losses in the plot use the same scoring mode. Thus their gap is not just noise corruption. Time drift can also create a gap.</p>
+<h2>The hybrid, with arithmetic</h2>
+<p>We first transform the GMM score with <code>asinh</code> and the AE error with <code>log1p</code>. These compress extreme magnitudes. For each transformed score, normal validation values supply its median and IQR. IQR is the 75th percentile minus the 25th percentile.</p>
+<p><code>normalized_score = (transformed_score - normal_validation_median) / normal_validation_IQR</code></p>
+<p><code>hybrid_score = 0.5 * normalized_GMM + 0.5 * normalized_AE</code></p>
+<p>For example, if normalized GMM is 2 and normalized AE is 4, hybrid is 3. A negative normalized value simply means it lies below that normal-validation median.</p>
+<p>Why normalize? Raw scales differ, so their direct sum would give arbitrary influence. Why use median/IQR? They reduce sensitivity to extreme values. Why equal weights? They give a simple fixed baseline without a fraud-label tuning search. Robust normalization still does not make the score a calibrated probability.</p>
+<p>The rationale is complementary evidence: density rarity and reconstruction difficulty. We test that rationale with GMM-only, AE-only and hybrid results, score correlation, and the overlap of detected frauds. A combination that runs successfully can still have no demonstrated advantage. See <code>RESULTS_EXPLAINED.md</code> for the measured conclusion.</p>
+<h2>Thresholds, ranking and the cost of alerts</h2>
+<p>A threshold turns a score into an alert. Our rule is strictly <code>score &gt; cutoff</code>. For a 0.5% validation FPR budget, take the normal-validation 99.5th percentile using the higher observed value. This keeps the observed validation false-positive fraction at or below that budget. It does not guarantee the same future FPR.</p>
+<p>Our fixed budgets are 0.1%, 0.5% and 1%. The default is 0.5%. A larger FPR budget generally allows more reviews and catches more fraud. A budget of 0.5% legitimate false positives does not mean exactly 0.5% of all transactions get reviewed, because detected frauds add to the queue.</p>
+<p>Top-100 ranking instead sends exactly 100 transactions for review in the entire test batch. It does not use a cutoff chosen from test labels. Sort scores decreasingly and take the first 100. Use stable sorting to make ties reproducible.</p>
+<h2>Metrics you must calculate aloud</h2>
+<p>TP: fraud with an alert. FP: legitimate with an alert. FN: fraud missed. TN: legitimate without an alert.</p>
+<ul>
+<li>Recall = TP/(TP+FN). Of all fraud, how much did we catch?</li>
+<li>Precision = TP/(TP+FP). Of all alerts, how many were fraud?</li>
+<li>FPR = FP/(FP+TN). Of all legitimate transactions, how many did we disturb?</li>
+<li>Precision@100 = fraud in the top 100 / 100. This is a review hit rate.</li>
+<li>PR curve = precision versus recall across thresholds.</li>
+<li>Trapezoidal PR AUC integrates that curve with straight-line interpolation. Higher means a better summary on this data.</li>
+<li>Average precision (AP) weights precision by increments in recall. It differs from trapezoidal PR AUC; show the label clearly.</li>
+</ul>
+<p>Phase 1 example: TP=37, FP=172, FN=37, TN=56,500. Recall=50%; precision=37/209=17.70%; FPR=172/56,672=0.3035%. There are 209 alerts. These are GMM numbers, not the AE result.</p>
+<p>Accuracy hides the rare fraud class. A zero-fraud detector can be over 99.8% accurate here. PR metrics also depend on base rate, so comparisons should use the same test set.</p>
+<h2>What the ablations answer</h2>
+<table>
+<thead>
+<tr>
+  <th>Comparison</th>
+  <th>Question</th>
+  <th>What to avoid claiming</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Plain AE vs denoising AE</td>
+  <td>Does input noise help?</td>
+  <td>Every regularizer always improves fraud ranking</td>
+</tr>
+<tr>
+  <td>Bottleneck 8 vs 12</td>
+  <td>Does weaker compression help?</td>
+  <td>This isolates only capacity without changing parameter count</td>
+</tr>
+<tr>
+  <td>Main seed 42 vs seed 43</td>
+  <td>How sensitive is the result to randomness?</td>
+  <td>Two seeds establish statistical certainty</td>
+</tr>
+<tr>
+  <td>PCA8 vs AE</td>
+  <td>Is nonlinear reconstruction useful here?</td>
+  <td>These have identical fitting objectives and parameter counts</td>
+</tr>
+<tr>
+  <td>GMM and AE vs hybrid</td>
+  <td>Does combination add value?</td>
+  <td>Combining models guarantees extra marks</td>
+</tr>
+</tbody>
+</table>
+<p>Main model settings stay fixed even if an ablation scores higher on test. Switching to the highest test result would use the test as validation. The best normal reconstruction model can still have worse fraud ranking.</p>
+<h2>Common viva questions and short answers</h2>
+<p><strong>1. Is this classification?</strong> The model learns normal reconstruction or density; evaluation compares its scores with fraud labels. A threshold yields binary alerts.</p>
+<p><strong>2. Why not a supervised classifier?</strong> This project studies normal-only training and compares density with reconstruction. A classifier would be a useful separate baseline, but it answers a different training question.</p>
+<p><strong>3. Do you use fraud labels at all?</strong> Yes, to filter legitimate training/validation rows and evaluate. No fraud examples update AE weights or fit GMM parameters.</p>
+<p><strong>4. Why avoid a random split?</strong> Chronological splitting better mimics learning from the past and scoring the future. It still cannot remove every source of leakage in the provider's original PCA preparation.</p>
+<p><strong>5. Why standardize if V1-V28 already came from PCA?</strong> PCA features can still have different variances. MSE should not be dominated merely by differing scale.</p>
+<p><strong>6. Why no Time feature?</strong> Elapsed seconds since this file starts is not a stable business feature. We use it to order the split.</p>
+<p><strong>7. Why only normal training rows?</strong> That is the project hypothesis: learn legitimate activity and flag deviations.</p>
+<p><strong>8. Why a small network?</strong> It is easier to understand and constrains reconstruction capacity. Larger networks may learn to copy anomalous inputs too well.</p>
+<p><strong>9. Why eight bottleneck units?</strong> A simple undercomplete predeclared choice. The 12-unit experiment probes sensitivity; we do not claim eight is optimal.</p>
+<p><strong>10. Why ReLU?</strong> It supplies a simple nonlinear transformation and efficient gradients, although negative preactivations have zero gradient.</p>
+<p><strong>11. Why linear output?</strong> Scaled targets include negative and unbounded values. Sigmoid or tanh would constrain the reconstruction range.</p>
+<p><strong>12. Why MSE?</strong> It is simple, differentiable, and penalizes large reconstruction differences. It is sensitive to extreme values, which is also a limitation.</p>
+<p><strong>13. Why Adam?</strong> It adapts parameter update sizes using gradient moments. It is a practical fixed optimizer here, not evidence of superiority over all optimizers.</p>
+<p><strong>14. What is backpropagation?</strong> The chain rule calculates how the loss changes with each trainable weight.</p>
+<p><strong>15. Why clear gradients?</strong> PyTorch accumulates them by default. Clearing starts a fresh batch update.</p>
+<p><strong>16. Is validation used for weight updates?</strong> No. Its normal rows choose a checkpoint and policy settings. That still makes it part of model selection.</p>
+<p><strong>17. Does early stopping always stop early?</strong> No. Training may reach the 30-epoch cap. Read the actual history and restored epoch.</p>
+<p><strong>18. Why can fraud reconstruct well?</strong> Fraud can share normal feature structure, or the network can generalize reconstruction beyond normal training patterns.</p>
+<p><strong>19. Why can a legitimate transaction score highly?</strong> Rare legitimate behavior can differ from learned normal patterns. Distribution change can also raise scores.</p>
+<p><strong>20. What is special about the hybrid?</strong> It combines two distinct anomaly signals using a declared normalization and fixed weights. Its measured contribution determines whether that rationale helps.</p>
+<p><strong>21. Is the hybrid a new neural architecture?</strong> No. It is score-level fusion after separate GMM and AE scoring.</p>
+<p><strong>22. Why not add the raw scores?</strong> Their units and ranges differ. The sum could be dominated by a scale choice rather than useful evidence.</p>
+<p><strong>23. Why not train a GMM on the bottleneck?</strong> That is a plausible separate hybrid. Our simple score fusion preserves a direct same-feature Phase 1 baseline and is easier to explain. We did not implement a latent GMM.</p>
+<p><strong>24. Are the scores fraud probabilities?</strong> No. A score ranks unusual activity. Probability calibration would require a separate justified calibration design.</p>
+<p><strong>25. Is the test untouched?</strong> No Phase 2 tuning uses test labels, but the team already saw Phase 1 results on this test period. We explicitly call it a reused chronological benchmark.</p>
+<p><strong>26. Can you deploy this in a bank?</strong> This is a small historical research comparison. Deployment would require future evaluation, drift monitoring, business costs, latency checks and operational review.</p>
+<p><strong>27. Why show bad ablations?</strong> They reveal whether an intervention helps and prevent reporting only favorable experiments.</p>
+<p><strong>28. What does the bootstrap mean?</strong> It resamples legitimate and fraud test rows separately to estimate conditional uncertainty in paired AP differences. It does not refit models or account for temporal dependence.</p>
+<p><strong>29. What if the confidence interval includes zero?</strong> This analysis does not clearly distinguish the paired AP difference from zero. Even an interval excluding zero would not prove performance on new data.</p>
+<p><strong>30. Why are feature-error explanations limited?</strong> Anonymous V-features reveal numerical contributions, not the original business reason for fraud.</p>
+<p><strong>31. What would you improve next?</strong> Evaluate truly later data, repeat more seeds, examine drift and analyst costs, then test one additional model change at a time using validation.</p>
+<p><strong>32. Did each member already implement their assigned section?</strong> The role table retains agreed responsibilities. Each member must review, rerun and record their own actual work before claiming implementation or understanding.</p>
+<h2>Your five-minute demonstration</h2>
+<ol>
+<li>Open notebook 00 and state the review-queue question.</li>
+<li>Open notebook 02 and show that both models receive 29 inputs from the same legitimate training rows.</li>
+<li>Open notebook 03 and explain the forward pass, clean target, loss, backward pass and optimizer step.</li>
+<li>Show the PR curves, threshold trade-offs and top-100 result in notebook 04.</li>
+<li>Explain the measured hybrid result, one failed or weaker ablation, and the reused-test limitation.</li>
+</ol>
+<p>Before presenting, fill the actual-work record in <code>TEAM_ROLES.md</code>. AI assistance helped prepare these materials. Each member remains responsible for checking the work and following faculty disclosure rules.</p>
+</body></html>

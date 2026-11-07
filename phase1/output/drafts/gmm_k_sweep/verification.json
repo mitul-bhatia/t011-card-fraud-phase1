@@ -1,0 +1,19 @@
+{
+  "verified_at_ist": "2026-11-07T18:08:49.432919+05:30",
+  "fresh_process": true,
+  "draft_code_cells_passed": 6,
+  "all_candidates_converged": true,
+  "candidates": [
+    4,
+    6,
+    8,
+    12,
+    16,
+    24,
+    32
+  ],
+  "minimum_training_bic_k": 32,
+  "numeric_results_reproduced": true,
+  "main_GMM_remains_K8": true,
+  "test_result_status": "exploratory; test previously examined"
+}

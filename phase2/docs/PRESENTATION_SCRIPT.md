@@ -1,0 +1,83 @@
+# Simple presentation script
+
+Use these notes to rehearse the 20-slide presentation. The same notes are embedded in the PPTX. Slides 1-19 form the main story; slide 20 lists reading and the demo. Explain the ideas in your own words.
+
+## 01. Card Fraud Triage
+
+We prioritize card transactions for human review. Both models learn earlier legitimate transactions. The GMM models normal density and the autoencoder reconstructs normal inputs. Our hybrid combines their scores. The results show a trade-off rather than a universal winner. The cover scatter uses a fixed sample of 750 legitimate test rows and all 74 frauds for visibility, so it does not display the true base rate. Axes show asinh of GMM score and log1p of AE error. Source: phase2/results/test_scores.csv, seed 42 sample.
+
+## 02. The review problem
+
+Our test period has 56,746 transactions, including 74 frauds. The test fraud rate is 0.1304%. Always predicting legitimate would be 99.87% accurate while finding no fraud. We therefore ask which transactions should enter a limited human-review queue. Precision is the fraud fraction among reviews, and recall is the fraction of fraud detected. Source: notebooks 01 and 04, results/splits.csv. The top-100 capacity always refers to the whole test batch, not 100 reviews per day.
+
+## 03. The same chronological split
+
+The dataset has 284,807 raw rows and 492 frauds. Stable sorting by Time and removal of 1,081 exact repeats leaves 283,726 rows and 473 frauds. We retain Phase 1's duplicate-removal assumption; no transaction IDs prove every repeated row is accidental. There are no missing or infinite values, and the dataset hash matches Phase 1. Use the earliest 60% for training, the next 20% for validation and the latest 20% for test. Only 169,893 legitimate training rows fit the models. Validation has 56,688 legitimate rows. Source: notebook 01 and results/data_audit.json and splits.csv. Phase 1 already exposed this test benchmark.
+
+## 04. The same 29 inputs
+
+Both models receive V1-V28 and log1p of Amount. The anonymous V-features are PCA features supplied by the provider; we do not run a new feature PCA here. The right-hand histogram uses all legitimate training amounts after log1p, not a sample. The examples 9 becoming 2.30 and 999 becoming 6.91 demonstrate the transform. StandardScaler learns means and standard deviations from legitimate training rows only. Time orders the split and Class identifies known legitimate rows and evaluates outcomes; neither is an input. Source: notebook 02, results/features.json and the training split.
+
+## 05. Why an autoencoder?
+
+The GMM models normal density with a mixture of Gaussian components. Our diagonal covariance baseline ignores within-component feature covariance and imposes a distributional shape. The AE instead learns nonlinear reconstruction, which may capture different relationships. We need to test this hypothesis rather than assume it helps. Sakurada and Yairi (2014), doi:10.1145/2689746.2689747, is the assignment's recommended AE anomaly-detection reading; publisher full text was unavailable and no performance is copied from it. Vincent et al. (2010), https://www.jmlr.org/papers/v11/vincent10a.html, motivates recovering clean inputs from corrupted versions. This small jointly trained network does not reproduce the papers' experiments. Sources: phase2/docs/LITERATURE_REVIEW.md and notebooks 00/03.
+
+## 06. The autoencoder architecture
+
+The encoder compresses 29 inputs through 16 units into an 8-unit bottleneck. The decoder expands through 16 units and reconstructs 29 outputs. The chart shows unit counts, not learned clusters or transaction volumes. The bottleneck is undercomplete because 8 is smaller than 29. Every hidden Linear layer is followed by ReLU, including the bottleneck. The final layer is linear because standardized targets can be negative. There are 1,253 trainable parameters. Eight is a simple predeclared teaching choice, not a proven optimum. Source: notebook 03 and results/training_settings.json.
+
+## 07. What reconstruction error means
+
+The chart shows the legitimate validation transaction with the median reconstruction MSE, selected without any test labels. It is an actual model output, not an invented example. The chart overlays its 29 original scaled features with the reconstructed values. No input noise is added while scoring. The per-transaction mean squared error is 0.4717. A separate two-feature arithmetic example is original [1,2], reconstruction [1.1,1.8], giving MSE (0.01+0.04)/2 = 0.025. High reconstruction error signals difficulty under the learned model, not proof of fraud. Source: notebook 03, models/denoising_ae.pt and the legitimate validation features.
+
+## 08. How the network learns
+
+Take a batch of 1,024 legitimate rows. Add Gaussian noise of standard deviation 0.10 in standardized units to the input only. The target remains the clean legitimate row. Clear old gradients, run the forward pass, compute mean squared error, backpropagate with loss.backward(), and call Adam's step to update weights. Adam uses learning rate 0.001 and weight decay 0.00001. An epoch is a full training pass. After each epoch, clean legitimate validation MSE chooses the checkpoint; no validation gradient updates occur. We restore the best accepted checkpoint, allow at most 30 epochs, and stop after five epochs without an improvement of at least 0.0001. Sources: notebook 03; PyTorch MSELoss and Adam documentation cited in the report.
+
+## 09. Learning curves and regularization
+
+Both curves use clean inputs in evaluation mode, so training noise does not inflate the plotted training loss. The main denoising AE reaches epoch 30 and restores epoch 30; early stopping is implemented but does not trigger for this run. A gap between training and later validation can reflect distribution change as well as overfitting. Compression, input noise, weight decay and the stopping rule constrain fitting. The wider AE stops after 15 epochs and restores epoch 10, while seed 43 runs 30 and restores epoch 28. Source: results/denoising_ae_history.csv and training_settings.json. Lower normal reconstruction loss does not by itself imply better fraud ranking.
+
+## 10. The hybrid score
+
+Our hybrid is implemented score-level fusion. For each transaction, transform the GMM negative log-density score with asinh and the AE reconstruction error with log1p. Asinh accepts signed GMM scores; both transformations compress extreme magnitudes. For each branch, subtract the median and divide by IQR computed from legitimate validation scores, with a numerical IQR floor of 1e-8. Then use a fixed equal-weight average. For example, normalized scores 2 and 4 produce hybrid score 3. We do not search weights using fraud labels or refit the GMM in the bottleneck. The rationale is complementary density and reconstruction evidence; correlated errors can reduce the benefit. Source: notebook 04 and results/frozen_policy.json.
+
+## 11. Precision-recall ranking
+
+The chart plots exact PR geometry from the measured test scores. Repeated points along a constant-recall vertical segment are reduced to its endpoints, which preserves both shape and trapezoidal area. The precision axis is zoomed to 0-0.35 to show the operational curves; the artificial endpoint at recall zero and precision one lies outside this zoom. Trapezoidal PR areas are GMM 0.1496, denoising AE 0.1308, hybrid 0.1412. AP values are 0.1532, 0.1338 and 0.1445. AP weights precision by recall increments and differs from trapezoidal area. GMM ranks best on both summaries; the hybrid improves the AE. Source: results/test_scores.csv and model_comparison.csv. Definition: https://scikit-learn.org/1.4/modules/generated/sklearn.metrics.average_precision_score.html.
+
+## 12. Exactly 100 reviews
+
+All methods sort the same test batch by decreasing anomaly score and select exactly 100 rows, with stable tie handling. GMM finds 29 frauds, AE finds 24, and hybrid finds 25; therefore precision at 100 is 29%, 24% and 25%. The remaining 71,76 and75 reviews are legitimate. This is the equal-review-count comparison. The bars add to 100. Randomly selecting 100 rows would contain approximately 0.13 frauds in expectation at this test base rate, but this is context rather than a future guarantee. Source: results/model_comparison.csv and review_capacities.csv.
+
+## 13. The default alert-policy result
+
+Each model uses its own cutoff at the 99.5th percentile of legitimate validation scores, with method higher and the strict rule score greater than cutoff. This gives a 0.5% validation FPR target. GMM finds 37 frauds with 172 false alerts, AE finds 33 with 137, and hybrid finds 35 with 132. Compared with GMM, hybrid makes 40 fewer false alerts, or 23.3% fewer, and catches two fewer frauds. Compared with AE, it catches two more frauds with five fewer false alerts. The three models share a validation target, not identical realized test FPR or review volume. Test FPRs are 0.3035%, 0.2417%, and 0.2329%. Source: results/test_thresholds.csv and validation_thresholds.csv. We retain the predeclared default.
+
+## 14. The false-alert trade-off
+
+All three policies were fixed on validation data before Phase 2 test evaluation. At the strict 0.1% validation FPR target, GMM finds six frauds and AE and hybrid find none. At 0.5%, GMM finds 37, AE 33, and hybrid 35. At 1%, all find 52. Corresponding legitimate false alerts are 39, 172, 381 for GMM; 22, 137, 314 for AE; and 25, 132, 304 for hybrid. A more permissive policy catches more fraud but creates more work. The same validation target does not guarantee the same future FPR. Source: results/test_thresholds.csv. We keep the declared 0.5% default rather than picking a test winner.
+
+## 15. Ablations: what changed?
+
+Plain versus denoising AE changes only input noise from 0 to 0.10; architecture, seed, rows, weight decay and stopping rule stay fixed. Noise modestly improves PR area and the top-100 count but makes more default-policy false alerts. Widening the bottleneck from 8 to 12 increases parameters from 1,253 to 1,385. It improves normal-validation MSE from 0.7130 to 0.6599, yet worsens fraud ranking. Changing seed 42 to 43 gives PR area 0.0915 and 12 frauds in 100 reviews, showing substantial sensitivity. PCA8 is a linear reconstruction reference with a different fitting procedure. All weaker runs stay visible, and none replaces the declared main model based on test results. Source: ablation_results.csv and training_settings.json.
+
+## 16. Why the hybrid loses some ranking
+
+Within the top 100, GMM detects 29 frauds and AE detects 24. All 24 AE frauds are already among the 29 GMM frauds. GMM contributes five unique detected frauds and AE contributes zero. The stacked bars show shared and unique fraud counts in each branch's review list. GMM and AE score ranks have Spearman correlation 0.746. Averaging can weaken the stronger branch's ordering. This finding is capacity-specific and does not rule out complementary cases at other policies. A 200-replicate paired stratified row bootstrap gives a conditional 95% interval of [0.0060, 0.0177] for hybrid AP minus main-AE AP, ignoring temporal dependence and refitting. Sources: complementarity.json, score_correlation.csv and summary.json.
+
+## 17. The autoencoder still makes errors
+
+At the default AE policy, TN is 56,535, FP is 137, FN is 41, and TP is 33. Recall is 33/74 = 44.59%, precision is 33/170 = 19.41%, and FPR is 137/56,672 = 0.2417%. The native table uses actual rows and decision columns. Fraud can reconstruct well and be missed. Rare legitimate behavior can reconstruct poorly and cause a false alert. Notebook 04 also shows feature-error contributions for a caught fraud, false alert and missed fraud. Anonymous V-features provide numerical contributions, not a business diagnosis such as a stolen card. Source: results/test_thresholds.csv, error_examples.csv and notebook 04.
+
+## 18. The same team and ownership
+
+We retain the agreed responsibility areas. H Maheshwari, called Hardik, enrollment 2401010174, owns evaluation and thresholds in notebook 04. Vaibhav, 2401010486, owns features in notebook 02. Mayank, 2401010267, owns training and ablations in notebook 03. Keshav, 2401010222, owns data quality and EDA in notebook 01. Mitul Bhatia, 2401010279, retains leadership, integration and coordination. Mayank and Keshav retain README and presentation responsibility. All five jointly contribute to the report. These are assignments rather than fabricated completed work. Each member must review, rerun, understand and record their actual contribution. Sources: the existing team record and phase2/docs/TEAM_ROLES.md.
+
+## 19. What we can conclude
+
+We implemented a small denoising AE and fixed score fusion, with data preparation, training, thresholds and ablations visible in the notebooks. GMM ranks best on this reused benchmark. Hybrid improves AE ranking and makes 40 fewer false alerts than GMM at the declared default validation policy, while catching two fewer frauds. This is a measured trade-off. Limits include two historical days, 74 test frauds, unknown provider PCA preparation, duplicate-removal assumptions and material seed sensitivity. Phase 1 already exposed the same test benchmark. Phase 2 tuning does not use its labels, but this is not a newly blind test. Next steps are later data, more seeds and explicit analyst costs. Sources: the report and Phase 2 results.
+
+## 20. References and the demo
+
+Use this as an appendix or end slide. Dempster et al. (1977) motivates EM. Sakurada and Yairi (2014) is the assignment's recommended AE anomaly-detection reading; no results are copied. Vincent et al. (2010) motivates denoising. Saito and Rehmsmeier (2015) motivates PR analysis for rare positives. Sources: https://doi.org/10.1111/j.2517-6161.1977.tb01600.x ; https://doi.org/10.1145/2689746.2689747 ; https://www.jmlr.org/papers/v11/vincent10a.html ; https://doi.org/10.1371/journal.pone.0118432 . Dataset: https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud . Metric definition: https://scikit-learn.org/1.4/modules/generated/sklearn.metrics.average_precision_score.html . For the demo, open index.html, show notebook 03 training, then notebook 04 PR curves, review capacity and ablations. AI assistance supported preparation; the team must verify the work and follow faculty disclosure requirements.

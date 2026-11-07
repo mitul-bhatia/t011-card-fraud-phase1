@@ -1,0 +1,8 @@
+{
+  "gmm_frauds_at_100": 29,
+  "ae_frauds_at_100": 24,
+  "both": 24,
+  "gmm_only": 5,
+  "ae_only": 0,
+  "hybrid_frauds_at_100": 25
+}

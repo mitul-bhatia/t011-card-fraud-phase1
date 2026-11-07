@@ -1,0 +1,226 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Phase 1 study guide</title><style>body{max-width:950px;margin:40px auto;padding:0 24px;font:17px/1.65 Arial,sans-serif;color:#173447;background:#fafbf9}a{color:#24668d}td,th{padding:10px;border-bottom:1px solid #d5dfe4}pre{overflow:auto}img{max-width:100%}</style><body><p><a href="../../index.html#phase1">Project home</a></p><h1>Understand the project, one part at a time</h1>
+<p>Read the five notebooks in order first. This guide is the shorter revision sheet. You do not need to memorize a long speech: explain the question that each step answers.</p>
+<p>The project now has five notebooks in <code>notebooks/</code>: 01 project/literature, 02 quality/EDA, 03 features, 04 GMM training and 05 evaluation. Read them in order. The code notebooks exchange saved files, so each can start with a fresh Python session. The root <code>README.md</code> links all five, and <code>docs/PHASE1_CHECKLIST.md</code> maps the nine assessment areas.</p>
+<h2>The Python notation used in the notebook</h2>
+<table>
+<thead>
+<tr>
+  <th>Notation</th>
+  <th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>name = value</code></td>
+  <td>Store a value under a name</td>
+</tr>
+<tr>
+  <td><code>==</code></td>
+  <td>Check whether two values are equal</td>
+</tr>
+<tr>
+  <td><code>table[&quot;Class&quot;]</code></td>
+  <td>Read one column</td>
+</tr>
+<tr>
+  <td><code>table[condition]</code></td>
+  <td>Keep rows where the condition is true</td>
+</tr>
+<tr>
+  <td><code>&amp;</code></td>
+  <td>Both conditions must be true</td>
+</tr>
+<tr>
+  <td><code>for ... in ...</code></td>
+  <td>Repeat the same steps for each listed value</td>
+</tr>
+<tr>
+  <td><code>assert condition</code></td>
+  <td>Stop if a required check fails</td>
+</tr>
+<tr>
+  <td><code>[:100]</code></td>
+  <td>Take the first 100 items</td>
+</tr>
+<tr>
+  <td><code>:.2f</code> inside printed text</td>
+  <td>Show a number with two decimal places</td>
+</tr>
+</tbody>
+</table>
+<p>Chart settings change the picture, not the GMM: <code>figsize</code> sets picture size, <code>bins</code> sets histogram ranges, <code>color</code>/<code>cmap</code> sets colors, <code>s</code> sets dot size, <code>alpha</code> sets dot transparency, and <code>dpi</code> sets saved-image resolution. Titles and axis labels explain what the picture shows. <code>values_format=&quot;,d&quot;</code> prints whole-number counts with commas in the confusion matrix; <code>colorbar=False</code> hides an extra color scale.</p>
+<h2>1. What problem are we solving?</h2>
+<p>Investigators cannot review every card transaction. We want unusual transactions near the front of their queue. This is <strong>triage</strong>: deciding what to inspect first. A review alert does not prove fraud.</p>
+<p><strong>Anomaly detection</strong> means looking for observations that do not fit the usual pattern. We fit a model of legitimate transactions and ask how unusual later transactions look under that model.</p>
+<h2>2. What is in the data?</h2>
+<p>One row represents one transaction. V1-V28 and Amount describe it. Class gives the correct answer: 0 is legitimate, 1 is fraud. Time tells us its position in the recording.</p>
+<p>V1-V28 are numbers transformed by the dataset provider for privacy. Their business meanings are unavailable. Do not call a V column a location, age, or merchant type.</p>
+<p>We check missing and repeated records. There are no missing cells. We remove 1,081 exact repeats, leaving 283,726 transactions and 473 frauds. Without transaction IDs, removing identical rows is an assumption. We state it rather than pretending we verified their identity.</p>
+<h2>3. Why are there three sets?</h2>
+<table>
+<thead>
+<tr>
+  <th>Set</th>
+  <th>Question it answers</th>
+  <th>What happens there</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Training</td>
+  <td>What does legitimate activity look like?</td>
+  <td>Fit the scaler and GMM using legitimate rows only</td>
+</tr>
+<tr>
+  <td>Validation</td>
+  <td>Where should we place the alert cutoff?</td>
+  <td>Choose cutoffs using legitimate validation scores</td>
+</tr>
+<tr>
+  <td>Test</td>
+  <td>How do our fixed choices work on later data?</td>
+  <td>Measure final results without changing the choices</td>
+</tr>
+</tbody>
+</table>
+<p>Earlier transactions come first. Approximately 60% go into training, then 20% validation and 20% test. Equal timestamps stay together. The split is 170,235 / 56,745 / 56,746 rows. Only the 169,893 legitimate training rows fit the model.</p>
+<p><strong>Data leakage</strong> happens when information that should belong to later evaluation influences learning or model choices. Training on test rows or choosing the cutoff from test fraud labels would cause leakage.</p>
+<h2>4. What does EDA tell us?</h2>
+<p>EDA means looking at counts and charts to understand the training data. Explain each chart with a concrete observation:</p>
+<table>
+<thead>
+<tr>
+  <th>Chart</th>
+  <th>What you should say</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Split sizes</td>
+  <td>We use a larger earlier period for training and separate later periods for validation and test.</td>
+</tr>
+<tr>
+  <td>Class counts</td>
+  <td>Training contains 169,893 legitimate transactions and only 342 frauds. Fraud is rare.</td>
+</tr>
+<tr>
+  <td>Amount before/after log</td>
+  <td>A few large amounts stretch the original scale. The log compresses that range.</td>
+</tr>
+<tr>
+  <td>Transactions by hour</td>
+  <td>Transaction volume changes over the recording. The short recording cannot prove a permanent daily pattern.</td>
+</tr>
+<tr>
+  <td>V1/V2 dots</td>
+  <td>Some fraud overlaps legitimate activity. The display samples legitimate points for readability, but fitting uses all legitimate training rows.</td>
+</tr>
+<tr>
+  <td>Feature correlation</td>
+  <td>Relationships among legitimate training V features are descriptive; low global correlation does not establish independence inside each Gaussian component.</td>
+</tr>
+<tr>
+  <td>AIC/BIC</td>
+  <td>Eight components give the smallest BIC among the four choices tested.</td>
+</tr>
+<tr>
+  <td>Confusion matrix</td>
+  <td>At the default cutoff, 37 frauds are found and 37 missed. There are 172 false alerts.</td>
+</tr>
+<tr>
+  <td>Policy tradeoff</td>
+  <td>More permissive cutoffs find more fraud here but create more legitimate alerts.</td>
+</tr>
+<tr>
+  <td>PR curve</td>
+  <td>The balance between precision and recall changes as the cutoff changes.</td>
+</tr>
+<tr>
+  <td>Top 100</td>
+  <td>Among exactly 100 reviewed transactions, 29 are fraud and 71 are legitimate.</td>
+</tr>
+<tr>
+  <td>Review capacities</td>
+  <td>Precision can rise or fall as the queue grows because the next block of ranked rows can contain more or fewer frauds.</td>
+</tr>
+<tr>
+  <td>Score overlap</td>
+  <td>Some legitimate and fraud transactions get similar scores, explaining false alerts and missed fraud. The chart's compressed scale is display only.</td>
+</tr>
+</tbody>
+</table>
+<h2>5. Why transform and scale the inputs?</h2>
+<p>We replace Amount with <strong>LogAmount = log(1 + Amount)</strong>. It handles zero and compresses large values. For example, 9 becomes about 2.30 and 999 becomes about 6.91. It does not remove large purchases.</p>
+<p>We keep V1-V28 and LogAmount: 29 inputs. Class is the answer, so it is never an input. Time is used for splitting, not for anomaly scoring.</p>
+<p>StandardScaler centers each input and adjusts its spread:</p>
+<p><code>scaled value = (value - training mean) / training standard deviation</code></p>
+<p>The <strong>mean</strong> is the average. The <strong>standard deviation</strong> describes spread around it. Only legitimate training rows determine these numbers. Later rows use those same numbers. <code>fit_transform</code> learns and applies; <code>transform</code> only applies.</p>
+<h2>6. What exactly does the GMM do?</h2>
+<p>A Gaussian is a bell-shaped distribution with a center and spread. A mixture combines several Gaussians, allowing more than one center in the legitimate data. <strong>K</strong> is the number of components. Components are mathematical patterns, not verified customer categories.</p>
+<p><img src="../figures/gmm_teaching.png" alt="Teaching picture of one Gaussian and a two-component mixture" /></p>
+<p>The picture uses invented numbers. One curve has a single center; the other combines two weighted Gaussian curves and has two centers. Notebook 04 contains the code that draws it. Our actual model uses 29 inputs and eight components.</p>
+<p>For a transaction x:</p>
+<p><code>density p(x) = sum of [component weight × that component's Gaussian density at x]</code></p>
+<p>A component's <strong>weight</strong> says how much it contributes to the mixture. Weights sum to one. The GMM adjusts weights, centers and spreads to make legitimate training data fit its density better.</p>
+<p>It uses <strong>EM</strong>. The E-step estimates membership in each component. The M-step updates the component parameters using those estimates. It repeats those steps. A convergence flag means its stopping rule was reached, not that it found the best possible solution.</p>
+<p>For example, a transaction can have an estimated 70% membership in one component and 30% in another. Its values then influence both updates, with more weight in the first. This is an illustration of soft membership, not a measured transaction from our run.</p>
+<p><strong>Diagonal covariance</strong> learns a separate spread for each input within a component. This is a simpler model that misses some relationships between inputs. Three initializations try three starting arrangements. The fixed seed helps reproduce them. A tiny variance addition helps avoid numerical failure when a component's spread becomes too small.</p>
+<p>We use labels to select legitimate training rows. The GMM fitting receives no target labels. Both statements are true; do not call the full preparation completely label-free.</p>
+<h2>7. Why do AIC and BIC choose eight components?</h2>
+<p>More components can fit data more closely, but also introduce more adjustable numbers. AIC and BIC balance fit against complexity:</p>
+<p><code>AIC = 2q - 2L</code></p>
+<p><code>BIC = q × log(N) - 2L</code></p>
+<p>N is the number of fitted training rows. q is the number of adjustable model parameters. L is the total training log likelihood: add the log densities of the fitted training examples. Higher L helps the fit; the q term penalizes complexity.</p>
+<p><strong>Lower is better. We choose the smallest training BIC.</strong> We try K=1,2,4,8, and eight wins. Because eight is the largest tested value and the scores are still falling, we cannot claim it is the best among all possible values. BIC evaluates legitimate density fit, not fraud recall.</p>
+<p>The K=1 candidate also provides an evaluation reference. It uses the same legitimate training rows, inputs, scaler and test set. Its PR AUC is 0.0527, compared with 0.1496 for the selected mixture. This shows a ranking improvement in this run, not a promise for every future dataset.</p>
+<h2>8. How do scores and cutoffs work?</h2>
+<p><code>anomaly score = -log p(x)</code></p>
+<p>Low density means the transaction is less typical of learned legitimate activity. The minus sign makes its anomaly score larger. In scikit-learn, <code>score_samples</code> returns log density; we put a minus sign in front. <code>predict</code> would return component IDs, which are not fraud labels.</p>
+<p>A score is not a fraud probability. Density can exceed one, so a negative score is possible.</p>
+<p>A <strong>threshold</strong> is a cutoff. If <code>score &gt; threshold</code>, create an alert. We set the cutoff from legitimate validation scores. For a 0.5% validation false-alert budget, use their 99.5th percentile. Most legitimate validation scores fall below it. The <code>higher</code> percentile method and strict <code>&gt;</code> rule keep the observed rate within budget.</p>
+<p>The default cutoff is 75.8942. A larger score triggers review. The 0.5% budget is a classroom example fixed before test evaluation. A future period can produce a different false-alert rate.</p>
+<h2>9. Explain the results by hand</h2>
+<table>
+<thead>
+<tr>
+  <th>Actual class</th>
+  <th style="text-align:right">No alert</th>
+  <th style="text-align:right">Alert</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Legitimate</td>
+  <td style="text-align:right">TN = 56,500</td>
+  <td style="text-align:right">FP = 172</td>
+</tr>
+<tr>
+  <td>Fraud</td>
+  <td style="text-align:right">FN = 37</td>
+  <td style="text-align:right">TP = 37</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Recall:</strong> Of the actual frauds, what fraction did we find? <code>37 / (37 + 37) = 50%</code>.</p>
+<p><strong>Precision:</strong> Of the alerts, what fraction were fraud? <code>37 / (37 + 172) = 17.70%</code>.</p>
+<p><strong>False-positive rate:</strong> Of the legitimate transactions, what fraction received an alert? <code>172 / (172 + 56,500) = 0.3035%</code>.</p>
+<p><strong>Workload:</strong> <code>37 + 172 = 209</code> transactions to review. We miss half the fraud, and most alerts are legitimate.</p>
+<p>PR AUC summarizes the precision-recall curve using trapezoidal area. Ours is <strong>0.1496</strong>. It does not mean 14.96% accuracy or 14.96% recall. Precision@100 instead asks a concrete capacity question: 29 of the 100 highest scores are fraud, so it is <strong>29%</strong>. The capacity applies to the full test batch.</p>
+<h2>10. Short viva practice</h2>
+<ol>
+<li><strong>Why use legitimate-only training?</strong> We want to learn normal behavior without teaching known fraud as normal.</li>
+<li><strong>Why keep Class out of the inputs?</strong> It is the answer; including it would leak the answer.</li>
+<li><strong>Why keep Time for splitting?</strong> We want earlier data to train and later data to evaluate.</li>
+<li><strong>Why avoid headline accuracy?</strong> Predicting every test row legitimate gives about 99.87% accuracy and zero fraud recall.</li>
+<li><strong>What is a GMM component?</strong> One Gaussian pattern with a weight, center and spread.</li>
+<li><strong>What are the two EM steps?</strong> Estimate component memberships, then update parameters using them.</li>
+<li><strong>Why choose K=8?</strong> It has the smallest training BIC among K=1,2,4,8.</li>
+<li><strong>Does a high anomaly score prove fraud?</strong> No. Legitimate transactions can also look unusual.</li>
+<li><strong>Why choose the cutoff on validation?</strong> Test results must evaluate choices already made.</li>
+<li><strong>Is precision the same as one minus FPR?</strong> No. Their denominators are alerts and legitimate transactions, respectively.</li>
+<li><strong>What is the main result?</strong> Thirty-seven of 74 test frauds found, with 172 false alerts at the default cutoff.</li>
+<li><strong>What is one important limit?</strong> Only 74 test frauds, a short old dataset, hidden feature meanings, or a simplified density model. Explain how the chosen limit affects the conclusion.</li>
+<li><strong>Where is the autoencoder?</strong> Phase 2. Phase 1 evaluates machine learning only.</li>
+</ol>
+<p>Each student should be able to explain the entire notebook. The final responsibility record is in <code>docs/TEAM_CONTRIBUTIONS.md</code>; use it to organize preparation, and make sure every member can explain the whole project.</p>
+</body></html>

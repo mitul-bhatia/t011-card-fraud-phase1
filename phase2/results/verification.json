@@ -1,0 +1,76 @@
+{
+  "00_Start_Here.ipynb": {
+    "code_cells": 0,
+    "errors": 0,
+    "fresh_process": true
+  },
+  "01_Data_and_Split.ipynb": {
+    "code_cells": 4,
+    "errors": 0,
+    "fresh_process": true
+  },
+  "02_Features_and_Scaling.ipynb": {
+    "code_cells": 3,
+    "errors": 0,
+    "fresh_process": true
+  },
+  "03_Autoencoder_Training.ipynb": {
+    "code_cells": 8,
+    "errors": 0,
+    "fresh_process": true
+  },
+  "04_Hybrid_and_Evaluation.ipynb": {
+    "code_cells": 11,
+    "errors": 0,
+    "fresh_process": true
+  },
+  "ranking_metrics_recomputed": true,
+  "confusion_matrices_recomputed": true,
+  "exploratory_draft": {
+    "code_cells": 6,
+    "errors": 0,
+    "fresh_process": true
+  },
+  "validation_budgets_checked": true,
+  "local_html_links_checked": true,
+  "team_identities_checked": true,
+  "report_pages": 4,
+  "presentation_slides": 20,
+  "presentation_pdf_pages": 20,
+  "speaker_note_parts": 20,
+  "editable_charts": 10,
+  "presentation_matches_validated_hash": true,
+  "phase1_notebooks": {
+    "01_Project_and_Literature.ipynb": {
+      "code_cells": 0,
+      "errors": 0,
+      "fresh_process": true
+    },
+    "02_Data_Quality_and_EDA.ipynb": {
+      "code_cells": 11,
+      "errors": 0,
+      "fresh_process": true
+    },
+    "03_Feature_Engineering.ipynb": {
+      "code_cells": 5,
+      "errors": 0,
+      "fresh_process": true
+    },
+    "04_GMM_Training.ipynb": {
+      "code_cells": 7,
+      "errors": 0,
+      "fresh_process": true
+    },
+    "05_Evaluation_and_Thresholds.ipynb": {
+      "code_cells": 20,
+      "errors": 0,
+      "fresh_process": true
+    }
+  },
+  "phase1_pr_metrics_recomputed": true,
+  "all_review_capacities_recomputed": true,
+  "single_root_index_checked": true,
+  "phase1_presentation_preserved": true,
+  "shared_inputs_checked": true,
+  "shared_inputs_note": "Compared local arrays"
+}
