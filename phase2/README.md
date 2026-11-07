@@ -9,6 +9,7 @@ For the shortest file guide, open [START_HERE.md](START_HERE.md).
 ## Start here
 
 - **Study without running Python:** open [the project index](../index.html#phase2). It links all five executed notebooks, the study guide, results and deliverables.
+- **Understand the DL part first:** [deep learning in 10 minutes](output/DEEP_LEARNING_IN_10_MINUTES.html), then notebook 03. The autoencoder is the neural model; score fusion is the hybrid extension.
 - **Revise for the viva:** [last-day study guide](docs/LAST_DAY_STUDY_GUIDE.md), then [results explained](docs/RESULTS_EXPLAINED.md) and [simple presentation script](docs/PRESENTATION_SCRIPT.md).
 - **Present and submit after team review:** [IEEE report](output/Phase2_Report.pdf), [20-slide PowerPoint](output/Phase2_Presentation.pptx), [presentation PDF](output/Phase2_Presentation.pdf), [report LaTeX](report/Phase2_Report.tex), and the notebooks.
 - **Download everything together:** [complete portable package](output/Card_Fraud_Triage_Complete.zip). It includes both phases and the shared root index. Download the official CSV separately on a new machine.

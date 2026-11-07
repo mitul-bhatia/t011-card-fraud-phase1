@@ -2,6 +2,8 @@
 
 Team T011, Section A, Project 26. Use this with the executed notebooks and the measured results in `../results/`. The aim is understanding. Reading this once cannot guarantee viva readiness.
 
+Start with [deep learning in 10 minutes](DEEP_LEARNING_IN_10_MINUTES.md). This longer guide provides the full theory and follow-up answers.
+
 ## A practical three-hour revision plan
 
 | Time | Work | Check yourself |

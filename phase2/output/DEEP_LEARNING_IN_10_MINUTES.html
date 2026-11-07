@@ -1,0 +1,149 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DEEP LEARNING IN 10 MINUTES</title><style>body{max-width:1000px;margin:40px auto;padding:0 24px;font:17px/1.65 system-ui,sans-serif;color:#183243;background:#fafbf9}h1{font-size:36px;line-height:1.2}h2{margin-top:2em;font-size:25px}h3{margin-top:1.7em}a{color:#155c8a}table{border-collapse:collapse;width:100%;font-size:15px}td,th{padding:10px;border-bottom:1px solid #d4dde2;text-align:left}th{background:#e7eef1}code,pre{font-family:ui-monospace,monospace;background:#edf1f3}pre{padding:18px;overflow:auto}img{max-width:100%}li{margin:7px 0}@media print{body{margin:0;font-size:11pt}a{color:inherit}h2,h3{break-after:avoid}tr{break-inside:avoid}}</style><body><p><a href="../../index.html#phase2">Project home</a></p><h1>Phase 2: deep learning in 10 minutes</h1>
+<p><strong>One sentence:</strong> We train a neural network to rebuild legitimate card transactions, then use reconstruction error to prioritize unusual transactions for review.</p>
+<p>Read this first. Notebook 03 contains the actual training code. The longer last-day guide is a reference after you understand this page.</p>
+<h2>1. What makes Phase 2 deep learning?</h2>
+<p>The autoencoder is a neural network with four learned Linear layers. Hidden ReLU activations let it learn nonlinear relationships. Backpropagation calculates gradients; Adam changes the weights to reduce reconstruction error. Our network has <strong>1,253 trainable parameters</strong>.</p>
+<table>
+<thead>
+<tr>
+  <th>Part</th>
+  <th>What it learns</th>
+  <th>Place in the project</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>GMM</td>
+  <td>Gaussian density patterns</td>
+  <td>Phase 1 ML baseline</td>
+</tr>
+<tr>
+  <td>Autoencoder</td>
+  <td>A nonlinear reconstruction function</td>
+  <td>Main Phase 2 DL model</td>
+</tr>
+<tr>
+  <td>Hybrid</td>
+  <td>No extra network; combines two scores</td>
+  <td>Extension after AE training</td>
+</tr>
+</tbody>
+</table>
+<p>The DL work includes architecture choices, training, validation, regularization, ablations and evaluation. The hybrid adds a comparison; it does not replace the autoencoder training.</p>
+<h2>2. What goes into the network?</h2>
+<p>One transaction becomes <strong>29 scaled numbers</strong>: V1-V28 and log(1 + Amount). These V-features are anonymous. We cannot translate them into business claims such as a stolen card.</p>
+<pre><code class="language-text">29 input values
+    16 encoder units
+        8 bottleneck units
+    16 decoder units
+29 reconstructed values
+</code></pre>
+<p>The encoder compresses. The decoder rebuilds. Eight is smaller than 29, so the bottleneck limits copying capacity. ReLU follows the hidden layers. The final layer stays linear because scaled values can be negative.</p>
+<p><img src="../figures/03_architecture.png" alt="The network compresses 29 inputs through 16 units into 8, then reconstructs 29 outputs." /></p>
+<h2>3. What are the input and target during training?</h2>
+<p>Only <strong>169,893 legitimate training rows</strong> update the weights. Class filters that subset; it is never an input feature or a reconstruction target.</p>
+<table>
+<thead>
+<tr>
+  <th>Item</th>
+  <th>Actual meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Clean row</td>
+  <td>The original 29 scaled values</td>
+</tr>
+<tr>
+  <td>Noisy input</td>
+  <td>Clean row plus small Gaussian noise, SD 0.10</td>
+</tr>
+<tr>
+  <td>Target</td>
+  <td>The same clean row</td>
+</tr>
+<tr>
+  <td>Output</td>
+  <td>The network's 29 rebuilt values</td>
+</tr>
+<tr>
+  <td>Loss</td>
+  <td>Mean squared difference between output and clean target</td>
+</tr>
+</tbody>
+</table>
+<p>The model predicts feature values, rather than a fraud label. At scoring time we use clean inputs and add no noise.</p>
+<p>Notebook 03 traces four real legitimate rows through the network just to show shapes: <strong>(4, 29) input, (4, 8) compressed, (4, 29) rebuilt</strong>. Real training uses batches of up to 1,024 rows. A shape demonstration shows the architecture; it is not a trained-model result.</p>
+<h2>4. What happens in one training update?</h2>
+<ol>
+<li>Take a batch of legitimate rows and add noise to its input.</li>
+<li>Run the network to get reconstructions: the forward pass.</li>
+<li>Compare those reconstructions with the clean targets using MSE.</li>
+<li>Use <code>loss.backward()</code> to calculate how the weights affected the loss.</li>
+<li>Use <code>optimizer.step()</code> to let Adam update the weights. Clear old gradients before each update.</li>
+</ol>
+<p>For a small arithmetic example, original <code>[1, 2]</code> and rebuilt <code>[1.1, 1.8]</code> give MSE <code>(0.01 + 0.04) / 2 = 0.025</code>. The real model averages over 29 features and the batch.</p>
+<p>An <strong>epoch</strong> is one pass through the training set. Learning rate 0.001 controls updates. Weight decay 0.00001 discourages large weights. Compression and noise also constrain learning.</p>
+<h2>5. How do we know it learned?</h2>
+<p>Across the main model's 30 epochs, clean training MSE falls from <strong>0.7903 to 0.4373</strong>. Legitimate-validation MSE falls from <strong>1.0438 to 0.7130</strong>. This shows improved reconstruction of normal data. Fraud detection still needs a separate check.</p>
+<p><img src="../figures/04_learning.png" alt="Clean training and legitimate-validation reconstruction error decrease across epochs." /></p>
+<p>Validation rows never update weights. Their clean reconstruction error selects the checkpoint. The main model reaches the 30-epoch cap and restores epoch 30. The stopping rule can stop a run after five epochs without enough improvement; it does not stop every run early.</p>
+<h2>6. How does reconstruction become a fraud-review score?</h2>
+<p>For each later transaction, rebuild its 29 inputs and average the 29 squared differences. Larger MSE means the transaction was harder for this model to reconstruct.</p>
+<p>Some frauds reconstruct well, and some unusual legitimate transactions reconstruct poorly. A high score is a reason to review a transaction, rather than proof of fraud.</p>
+<p>The default cutoff is the 99.5th percentile of legitimate validation errors. Scores strictly above it create alerts. We apply that saved cutoff to the later test set. Its observed validation FPR budget is 0.5%; the future test FPR can differ.</p>
+<h2>7. What did the DL model achieve?</h2>
+<p>The same test period contains <strong>56,746 transactions and 74 frauds</strong>.</p>
+<table>
+<thead>
+<tr>
+  <th>AE result</th>
+  <th style="text-align:right">Measured value</th>
+  <th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Trapezoidal PR area</td>
+  <td style="text-align:right">0.1308</td>
+  <td>Summary of its precision-recall curve</td>
+</tr>
+<tr>
+  <td>Fraud among 100 reviews</td>
+  <td style="text-align:right">24</td>
+  <td>24% precision at that capacity</td>
+</tr>
+<tr>
+  <td>Fraud caught at default cutoff</td>
+  <td style="text-align:right">33 of 74</td>
+  <td>44.6% recall</td>
+</tr>
+<tr>
+  <td>Legitimate false alerts</td>
+  <td style="text-align:right">137</td>
+  <td>Legitimate transactions sent for review</td>
+</tr>
+<tr>
+  <td>Total alerts at default cutoff</td>
+  <td style="text-align:right">170</td>
+  <td>33 frauds + 137 legitimate rows</td>
+</tr>
+</tbody>
+</table>
+<p>GMM finds 29 frauds in its top 100; AE finds 24; hybrid finds 25. Thus GMM ranks best here. Implementing DL correctly does not guarantee it beats ML.</p>
+<p>The tested DL model does improve on the <strong>linear PCA8 reconstruction reference</strong>: PR area is <strong>0.1308 versus 0.0712</strong>, with <strong>24 versus 6 frauds in 100 reviews</strong>. Both compress to eight dimensions, but fitting procedures and parameter counts differ. This is a useful result for this nonlinear reconstruction experiment, rather than a general claim that DL always wins.</p>
+<p>The ablations are useful DL findings: noise helps some measures, a wider bottleneck lowers normal loss but worsens fraud ranking, and a second seed gives weaker results. We keep these outcomes visible. Phase 1 already exposed this test period, so this is a reused benchmark; we do not tune Phase 2 on its labels.</p>
+<h2>8. A simple demo and viva answer</h2>
+<p>In notebook 03, show the network, the shape table, the five training actions and the loss curves. In notebook 04, show PR curves and one confusion matrix. Then explain one ablation. Use the detailed guides only for follow-up questions.</p>
+<p><strong>Say this:</strong> &quot;Phase 2 trains a denoising autoencoder on legitimate transactions. It compresses 29 features into 8 and learns to rebuild the clean input using MSE, backpropagation and Adam. We select the checkpoint on legitimate validation data, then use reconstruction error to rank later mixed transactions. We compare it fairly with GMM and test a fixed hybrid. GMM remains stronger on this benchmark, while the DL experiments show what reconstruction learning can and cannot do.&quot;</p>
+<h2>Check your understanding</h2>
+<ul>
+<li><strong>What is the target?</strong> The clean 29-feature transaction.</li>
+<li><strong>What changes during training?</strong> The network weights and biases.</li>
+<li><strong>Why use a bottleneck?</strong> To limit copying capacity.</li>
+<li><strong>Where do fraud labels enter?</strong> Filtering known normal rows and evaluation; no fraud examples update weights.</li>
+<li><strong>What makes this DL?</strong> A learned multilayer neural network trained by backpropagation.</li>
+<li><strong>Does the hybrid train a new network?</strong> No; it combines GMM and AE scores.</li>
+</ul>
+<p><a href="LAST_DAY_STUDY_GUIDE.html">Open the complete last-day guide</a> or <a href="RESULTS_EXPLAINED.html">read the results in detail</a>.</p>
+</body></html>

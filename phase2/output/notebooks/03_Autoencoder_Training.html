@@ -7807,6 +7807,7 @@ a.anchor-link {
 Our sizes are <strong>29 -&gt; 16 -&gt; 8 -&gt; 16 -&gt; 29</strong>. Eight is a small, predeclared teaching choice, not a proven optimal size.
 ReLU adds nonlinearity (<code>max(0, x)</code>). The last layer stays linear because standardized inputs can be negative.</p>
 <p>This notebook never loads the test features or labels. Only legitimate validation rows choose the saved epoch.</p>
+<p><strong>Why this is deep learning:</strong> the model has four learned Linear layers. Backpropagation computes gradients of reconstruction loss, and Adam updates its weights. The target is the clean input; GMM scoring and the hybrid are evaluated after this neural training.</p>
 </div>
 </div>
 </div>
@@ -7969,6 +7970,108 @@ Two-feature teaching example: 0.024999999999999998
 </div>
 </div>
 </div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3a88e63e">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Follow-four-transactions-through-the-network">Follow four transactions through the network<a class="anchor-link" href="#Follow-four-transactions-through-the-network">¶</a></h2><p>This is a <strong>shape demonstration before training</strong>, using four real legitimate inputs. It shows where compression happens. It does not measure model quality.</p>
+<p><code>(4, 29)</code> means four transactions with 29 features each. The bottleneck becomes <code>(4, 8)</code>; the output returns to <code>(4, 29)</code>. Real training uses batches of up to 1,024 rows. <strong>No Class column enters the network.</strong></p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=29cc0af0">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-python"><pre><span></span><span class="c1"># Follow the dimensions; these untrained outputs are not anomaly scores.</span>
+<span class="n">example_inputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">X_train</span><span class="p">[:</span><span class="mi">4</span><span class="p">])</span>
+<span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+    <span class="n">example_encoded</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">encoder</span><span class="p">(</span><span class="n">example_inputs</span><span class="p">)</span>
+    <span class="n">example_rebuilt</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">example_inputs</span><span class="p">)</span>
+<span class="n">display</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+    <span class="s2">"stage"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"Input"</span><span class="p">,</span> <span class="s2">"Compressed"</span><span class="p">,</span> <span class="s2">"Rebuilt"</span><span class="p">],</span>
+    <span class="s2">"rows"</span><span class="p">:</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="n">example_inputs</span><span class="p">,</span> <span class="n">example_encoded</span><span class="p">,</span> <span class="n">example_rebuilt</span><span class="p">]],</span>
+    <span class="s2">"features_per_row"</span><span class="p">:</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="n">example_inputs</span><span class="p">,</span> <span class="n">example_encoded</span><span class="p">,</span> <span class="n">example_rebuilt</span><span class="p">]]</span>
+<span class="p">}))</span>
+<span class="k">assert</span> <span class="n">example_inputs</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">29</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">example_encoded</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">example_rebuilt</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">29</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"This shows the network dimensions. Weight training starts below."</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell-outputWrapper">
+<div class="jp-Collapser jp-OutputCollapser jp-Cell-outputCollapser">
+</div>
+<div class="jp-OutputArea jp-Cell-outputArea">
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedText jp-OutputArea-output" data-mime-type="text/plain" tabindex="0">
+<pre>This shows the network dimensions. Weight training starts below.
+</pre>
+</div>
+</div>
+<div class="jp-OutputArea-child">
+<div class="jp-OutputPrompt jp-OutputArea-prompt"></div>
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output" data-mime-type="text/html" tabindex="0">
+<div>
+<style scoped="">
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+<thead>
+<tr style="text-align: right;">
+<th></th>
+<th>stage</th>
+<th>rows</th>
+<th>features_per_row</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>0</th>
+<td>Input</td>
+<td>4</td>
+<td>29</td>
+</tr>
+<tr>
+<th>1</th>
+<td>Compressed</td>
+<td>4</td>
+<td>8</td>
+</tr>
+<tr>
+<th>2</th>
+<td>Rebuilt</td>
+<td>4</td>
+<td>29</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=28d6afe4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -7996,7 +8099,7 @@ Lower reconstruction loss does <strong>not</strong> automatically mean better fr
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-python"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">train_autoencoder</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">bottleneck</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">noise</span><span class="o">=</span><span class="mf">0.10</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">):</span>
@@ -8064,7 +8167,7 @@ The main denoising model was fixed before seeing Phase 2 test results.</p>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [6]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-python"><pre><span></span><span class="n">trained</span><span class="p">,</span> <span class="n">runs</span> <span class="o">=</span> <span class="p">{},</span> <span class="p">[]</span>
@@ -8193,7 +8296,7 @@ denoising_ae: epoch 30, train 0.4373, validation 0.7130
 <td>30</td>
 <td>30</td>
 <td>0.7119</td>
-<td>9.1461</td>
+<td>9.6147</td>
 </tr>
 <tr>
 <th>1</th>
@@ -8205,7 +8308,7 @@ denoising_ae: epoch 30, train 0.4373, validation 0.7130
 <td>30</td>
 <td>30</td>
 <td>0.7130</td>
-<td>9.1258</td>
+<td>8.9488</td>
 </tr>
 </tbody>
 </table>
@@ -8232,7 +8335,7 @@ not a complete uncertainty estimate. Keep every run even if it performs worse.</
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-python"><pre><span></span><span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">bottleneck</span><span class="p">,</span> <span class="n">noise</span><span class="p">,</span> <span class="n">seed</span> <span class="ow">in</span> <span class="p">[</span>
@@ -8352,7 +8455,7 @@ seed43_ae: epoch 30, train 0.4343, validation 0.6849
 <td>30</td>
 <td>30</td>
 <td>0.7119</td>
-<td>9.1461</td>
+<td>9.6147</td>
 </tr>
 <tr>
 <th>1</th>
@@ -8364,7 +8467,7 @@ seed43_ae: epoch 30, train 0.4343, validation 0.6849
 <td>30</td>
 <td>30</td>
 <td>0.7130</td>
-<td>9.1258</td>
+<td>8.9488</td>
 </tr>
 <tr>
 <th>2</th>
@@ -8376,7 +8479,7 @@ seed43_ae: epoch 30, train 0.4343, validation 0.6849
 <td>10</td>
 <td>15</td>
 <td>0.6599</td>
-<td>4.7608</td>
+<td>4.4506</td>
 </tr>
 <tr>
 <th>3</th>
@@ -8388,7 +8491,7 @@ seed43_ae: epoch 30, train 0.4343, validation 0.6849
 <td>28</td>
 <td>30</td>
 <td>0.6845</td>
-<td>9.8505</td>
+<td>8.9986</td>
 </tr>
 </tbody>
 </table>
@@ -8415,7 +8518,7 @@ The vertical line marks the restored epoch. Read the observed curves rather than
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
 <div class="highlight hl-python"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">11</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>

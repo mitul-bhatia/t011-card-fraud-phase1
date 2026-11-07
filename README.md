@@ -11,6 +11,8 @@ Open the **[project website](https://mitul-bhatia.github.io/t011-card-fraud-phas
 
 Each phase keeps its own `notebooks/`, `results/`, `figures/`, `report/`, `output/` and documentation. Executed HTML reading copies are in each phase's `output/notebooks/` folder. Final reports and presentations are in that phase's `output/` folder.
 
+For Phase 2, begin with [deep learning in 10 minutes](phase2/output/DEEP_LEARNING_IN_10_MINUTES.html). It explains the autoencoder's input, target, weight updates, validation and measured results before introducing the hybrid.
+
 The dataset lives once at **`phase1/data/raw/creditcard.csv`**. Phase 2 reuses it and the Phase 1 baseline for a consistent comparison. Data, generated arrays and model files are excluded from Git and the portable package. Download the official CSV from the [ULB/Kaggle dataset page](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud) on a new machine.
 
 ## Run the project

@@ -2,6 +2,12 @@
 
 Team T011, Section A, Project 26. The team and responsibility areas stay the same.
 
+## Understand Phase 2 first
+
+**Phase 2 is deep learning.** Its main model is a denoising autoencoder: a neural network that learns to rebuild legitimate transactions. Four learned Linear layers and hidden ReLU activations transform 29 inputs into 8 compressed values and back into 29 outputs. Backpropagation and Adam update its 1,253 parameters.
+
+Start with **[Deep learning in 10 minutes](output/DEEP_LEARNING_IN_10_MINUTES.html)**. Then read notebook 03. The GMM is the earlier ML baseline; the hybrid is an extension after the AE is trained.
+
 ## Present and submit
 
 1. [PowerPoint presentation](output/Phase2_Presentation.pptx): 20 slides, editable charts and speaking notes.
@@ -10,8 +16,8 @@ Team T011, Section A, Project 26. The team and responsibility areas stay the sam
 
 ## Study in this order
 
-1. [Open the reading page](../index.html#phase2). It links all five notebooks with outputs.
-2. [Read the last-day study guide](output/LAST_DAY_STUDY_GUIDE.html).
+1. [Read the short DL explanation](output/DEEP_LEARNING_IN_10_MINUTES.html), then [open the notebooks](../index.html#phase2).
+2. [Use the last-day study guide](output/LAST_DAY_STUDY_GUIDE.html) for the complete theory and viva questions.
 3. [Rehearse the presentation script](output/PRESENTATION_SCRIPT.html).
 4. [Understand the result trade-offs](output/RESULTS_EXPLAINED.html).
 

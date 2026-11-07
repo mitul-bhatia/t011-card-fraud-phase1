@@ -49,6 +49,11 @@ for path in sorted((P2 / 'notebooks').glob('*.ipynb')):
     checks[path.name] = {'code_cells': len(cells), 'errors': 0,
                          'fresh_process': bool(book.metadata['execution'].get('fresh_process'))}
 assert len(checks) == 5
+guide = P2/'output/DEEP_LEARNING_IN_10_MINUTES.html'
+assert guide.exists()
+guide_text = guide.read_text()
+assert '1,253' in guide_text and 'Backpropagation' in guide_text
+assert '169,893' in guide_text and 'four learned Linear layers' in guide_text
 draft_path = P1/'notebooks/drafts/06_GMM_Component_Experiment.ipynb'
 draft = nbformat.read(draft_path, as_version=4)
 nbformat.validate(draft)

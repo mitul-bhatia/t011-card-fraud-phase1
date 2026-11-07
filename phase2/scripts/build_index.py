@@ -114,7 +114,7 @@ h2{{font-size:27px}}section{{padding:32px 0}}.phase-nav{{gap:8px 22px}}.chapters
 <p class="result-note">The one-Gaussian reference has PR area {PHASE1['one_gaussian_PR_AUC']:.4f}. The default cutoff uses a 0.5% validation false-positive budget. <a href="phase1/results/summary.json">Saved metric summary</a>.</p>
 {figure('phase1/figures/09_precision_recall.png','Phase 1 test precision-recall curves compare the selected GMM with a one-Gaussian reference.')}</div></section>
 <section id="phase2" aria-labelledby="phase2-title"><h2 id="phase2-title">Phase 2 · Deep learning and hybrid</h2>
-<p class="phase-intro">Train an autoencoder on legitimate transactions, then compare reconstruction error with GMM density scores and their normalized combination. Read 00, then run 01–04.</p>
+<p class="phase-intro">The autoencoder is the deep learning model: it learns to compress and rebuild legitimate transactions. Start with <a href="phase2/output/DEEP_LEARNING_IN_10_MINUTES.html">deep learning in 10 minutes</a>, then read 00 and run 01–04. GMM is the ML comparison; score fusion is the hybrid extension.</p>
 <div class="phase-layout"><div><h3>Notebooks</h3>{chapters('phase2')}</div><aside aria-label="Phase 2 deliverables"><h3>Report, slides and study</h3>
 <ul class="resources"><li><a href="phase2/output/Phase2_Report.pdf">IEEE report</a><small>DL method, hybrid logic, ablations and limitations</small></li>
 <li><a href="phase2/output/Phase2_Presentation.pptx">Phase 2 presentation</a><small>20 slides with editable charts and speaking notes</small></li>

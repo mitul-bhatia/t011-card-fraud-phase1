@@ -1,10 +1,11 @@
 {
   "slides": 20,
   "editable_charts": 10,
-  "sha256": "656200642d11cda94f5c652297e1bfb8107bc95c34b22269ad09b950dc5bfa1b",
+  "sha256": "f8c5ba37274ebf488acb0f7339d13a3cf49a1d1c0156d178a00c8b5142eef6fd",
   "package_integrity_passed": true,
   "layout_checks_passed": true,
   "native_chart_data_passed": true,
   "visual_reference": "phase1/output/Phase1_Presentation_Final.pptx; palette and visual direction",
-  "native_powerpoint_editing_verified": false
+  "native_powerpoint_editing_verified": false,
+  "clarity_review": "DL input and clean target, learned layers, weight updates and measured loss changes explained explicitly"
 }

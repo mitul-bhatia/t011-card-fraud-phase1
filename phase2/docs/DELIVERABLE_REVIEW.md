@@ -21,6 +21,7 @@
 
 - The four-page IEEE report includes DL rationale, training, hybrid equations, ablations, trade-offs, references and limitations.
 - The last-day guide explains the training loop and metric denominators, with a three-hour revision plan and viva questions.
+- The short first-read guide explains why Phase 2 is DL, its noisy input and clean target, tensor shapes, weight updates and actual loss reduction. Notebook 03 traces four legitimate inputs through the network before training. The updated cover and teaching slides lead with the neural model; GMM and score fusion follow as comparisons.
 - The same five members and role areas appear throughout. Individual actual-work entries remain for the named members to complete after doing their review.
 - The result conclusion is consistent: GMM ranks best; hybrid improves AE and changes the false-alert trade-off. The test benchmark is reused from Phase 1.
 

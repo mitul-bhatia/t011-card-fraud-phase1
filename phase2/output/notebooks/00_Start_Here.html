@@ -7802,10 +7802,13 @@ a.anchor-link {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Phase-2:-Card-Fraud-Triage">Phase 2: Card Fraud Triage<a class="anchor-link" href="#Phase-2:-Card-Fraud-Triage">¶</a></h1><p><strong>Team T011 | Section A | Project 26</strong></p>
+<h1 id="Phase-2:-Deep-learning-for-card-fraud-triage">Phase 2: Deep learning for card fraud triage<a class="anchor-link" href="#Phase-2:-Deep-learning-for-card-fraud-triage">¶</a></h1><p><strong>Team T011 | Section A | Project 26</strong></p>
 <p><strong>Our question:</strong> If a person can review only 100 transactions, which 100 should they see first?</p>
 <p>Read this notebook. Then run <strong>01 -&gt; 02 -&gt; 03 -&gt; 04</strong>, each from a fresh kernel.
 The code is visible in the notebooks. Saved outputs let you study without retraining.</p>
+<h2 id="Start-with-the-deep-learning-model">Start with the deep learning model<a class="anchor-link" href="#Start-with-the-deep-learning-model">¶</a></h2><p><strong>Phase 2 trains a neural network: a denoising autoencoder.</strong> Four learned Linear layers compress 29 features into 8 values, then rebuild 29 outputs. Hidden ReLU activations make the mapping nonlinear. Backpropagation and Adam update the network's 1,253 parameters.</p>
+<p><strong>Input during training:</strong> a noisy legitimate transaction. <strong>Target:</strong> the same clean transaction. The model learns feature values, rather than a fraud label.</p>
+<p>Read <a href="../DEEP_LEARNING_IN_10_MINUTES.html">deep learning in 10 minutes</a> first. Notebook 03 shows the real network, a shape trace, the training loop and learning curves. Notebook 04 evaluates the trained AE and then adds the hybrid. GMM remains the Phase 1 comparison.</p>
 <h2 id="The-whole-project-in-five-sentences">The whole project in five sentences<a class="anchor-link" href="#The-whole-project-in-five-sentences">¶</a></h2><ol>
 <li>We learn normal spending from earlier <strong>legitimate transactions only</strong>.</li>
 <li>A <strong>GMM</strong> asks: how unusual is this transaction under a mixture of normal patterns?</li>
@@ -7901,7 +7904,7 @@ The implemented score fusion is the hybrid. We report any loss as well as any ga
 <li>Phase 1 already exposed this test benchmark. Phase 2 does not use test labels to tune its models,
 but this is a reused benchmark, not a newly blind test. Future data would be needed for that.</li>
 </ul>
-<h2 id="What-to-read-for-the-viva">What to read for the viva<a class="anchor-link" href="#What-to-read-for-the-viva">¶</a></h2><p>Read <code>../docs/LAST_DAY_STUDY_GUIDE.md</code>, then inspect the five notebook outputs.
+<h2 id="What-to-read-for-the-viva">What to read for the viva<a class="anchor-link" href="#What-to-read-for-the-viva">¶</a></h2><p>Start with <a href="../DEEP_LEARNING_IN_10_MINUTES.html">the short DL explanation</a>. Then use <code>../docs/LAST_DAY_STUDY_GUIDE.md</code> for the complete theory and inspect the five notebook outputs.
 Understand why we made each choice, what each metric divides by, and where the hybrid helps or hurts.</p>
 </div>
 </div>

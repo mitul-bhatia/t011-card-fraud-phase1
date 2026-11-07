@@ -13,6 +13,7 @@ The supplied [course PDF](../../CSAI_Project_Instructions_Phase_1_and_Phase_2.pd
 | Feature engineering | Phase 1 notebook 03 | 29 inputs; scaling learns only from legitimate training rows |
 | ML theory and application | Phase 1 notebooks 04–05 | EM, diagonal GMM, AIC/BIC, thresholds and measured results |
 | DL architecture logic | Phase 2 notebook 03 | 29–16–8–16–29, ReLU, linear output, 1,253 parameters and rationale |
+| Simple explanation of the DL work | Short first-read guide, notebook 00 and notebook 03's shape trace | Noisy legitimate input, clean target, learned weights, validation and separate fraud evaluation |
 | DL literature | Phase 2 literature guide and report | Denoising motivation distinguished from reproducing a published method |
 | DL data and regularization | Phase 2 notebooks 01–03 | Same legitimate rows; noise, weight decay and normal-validation stopping |
 | Theoretical rigor | Report and notebooks | Density, reconstruction MSE, normalization and threshold equations |

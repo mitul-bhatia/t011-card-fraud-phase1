@@ -63,7 +63,7 @@ h2{font-size:27px}section{padding:32px 0}.phase-nav{gap:8px 22px}.chapters li{ga
 <p class="result-note">The one-Gaussian reference has PR area 0.0527. The default cutoff uses a 0.5% validation false-positive budget. <a href="phase1/results/summary.json">Saved metric summary</a>.</p>
 <figure><img src="phase1/figures/09_precision_recall.png" width="1050" height="600" loading="lazy" alt="Phase 1 test precision-recall curves compare the selected GMM with a one-Gaussian reference."><figcaption>Phase 1 test precision-recall curves compare the selected GMM with a one-Gaussian reference.</figcaption></figure></div></section>
 <section id="phase2" aria-labelledby="phase2-title"><h2 id="phase2-title">Phase 2 · Deep learning and hybrid</h2>
-<p class="phase-intro">Train an autoencoder on legitimate transactions, then compare reconstruction error with GMM density scores and their normalized combination. Read 00, then run 01–04.</p>
+<p class="phase-intro">The autoencoder is the deep learning model: it learns to compress and rebuild legitimate transactions. Start with <a href="phase2/output/DEEP_LEARNING_IN_10_MINUTES.html">deep learning in 10 minutes</a>, then read 00 and run 01–04. GMM is the ML comparison; score fusion is the hybrid extension.</p>
 <div class="phase-layout"><div><h3>Notebooks</h3><ol class="chapters"><li><span class="chapter-number">00</span><div>
           <a class="chapter-title" href="phase2/output/notebooks/00_Start_Here.html">Start here</a>
           <p>The DL question, fair-comparison rules and retained team roles.</p></div><a class="source" href="phase2/notebooks/00_Start_Here.ipynb">Code</a></li><li><span class="chapter-number">01</span><div>
