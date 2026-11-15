@@ -71,4 +71,4 @@ A fresh-copy check also rebuilt the GMM from the original K grid, rather than lo
 
 ## Final team review
 
-Open every final artifact, complete `docs/TEAM_ROLES.md`, rehearse the individual viva and check current faculty Phase 2 submission instructions. The provided PDF gives no Phase 2 date or form. Publishing this repository does not submit coursework through a faculty form.
+Open every final artifact, complete `docs/TEAM_ROLES.md`, rehearse the individual viva and check current faculty Phase 2 submission instructions. The provided PDF gives no Phase 2 date or form. Publishing this repository does not submit coursework through a faculty forms.
