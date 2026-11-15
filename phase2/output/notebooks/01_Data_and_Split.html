@@ -7805,6 +7805,32 @@ a.anchor-link {
 <h1 id="01.-Data-and-split">01. Data and split<a class="anchor-link" href="#01.-Data-and-split">¶</a></h1><p><strong>Lead: Keshav.</strong> Goal: check the data and keep past and future separate.</p>
 <p><code>Class = 0</code> means legitimate. <code>Class = 1</code> means fraud. Class is an answer used for filtering and
 evaluation, never an input feature. <code>Time</code> is elapsed seconds, so it orders the transactions.</p>
+<p><strong>Why this notebook comes first:</strong> every later result depends on these rows. If a check here fails, or
+past and future rows mix, the autoencoder, GMM and hybrid comparisons would all be unreliable.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Reads</strong></td>
+<td><code>phase1/data/raw/creditcard.csv</code> (the same CSV as Phase 1)</td>
+</tr>
+<tr>
+<td><strong>Saves for notebook 02</strong></td>
+<td><code>models/train.csv</code>, <code>models/validation.csv</code>, <code>models/test.csv</code> (excluded from Git)</td>
+</tr>
+<tr>
+<td><strong>Saves as evidence</strong></td>
+<td><code>results/splits.csv</code>, <code>results/data_audit.json</code>, <code>figures/01_data.png</code></td>
+</tr>
+</tbody>
+</table>
+<p>The full exploratory analysis (amount skew, hourly volume, V1/V2 overlap, correlations) is in
+Phase 1 notebook 02. This notebook repeats only the checks and the split that Phase 2 depends on.</p>
 </div>
 </div>
 </div>
@@ -7851,6 +7877,41 @@ evaluation, never an input feature. <code>Time</code> is elapsed seconds, so it 
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="1.-Load-the-real-dataset">1. Load the real dataset<a class="anchor-link" href="#1.-Load-the-real-dataset">¶</a></h2><p>We use the existing ULB/Kaggle CSV. Missing data causes a clear error instead of a silent synthetic fallback.
 Source: <a href="https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud">https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud</a></p>
+<p>Each <code>assert</code> stops the notebook if its condition is false:</p>
+<table>
+<thead>
+<tr>
+<th>Check</th>
+<th>Why it matters</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Columns are exactly <code>Time, V1–V28, Amount, Class</code></td>
+<td>A different file or column order would feed wrong inputs</td>
+</tr>
+<tr>
+<td>No missing cells</td>
+<td>The scaler, GMM and AE cannot use empty values</td>
+</tr>
+<tr>
+<td>All values finite</td>
+<td>One infinite value would break training</td>
+</tr>
+<tr>
+<td><code>Class</code> is only 0 or 1</td>
+<td>Labels must mean legitimate or fraud</td>
+</tr>
+<tr>
+<td><code>Amount</code> and <code>Time</code> are not negative</td>
+<td>Negative money or time would signal a corrupted file</td>
+</tr>
+<tr>
+<td>SHA256 matches Phase 1</td>
+<td>Proves both phases use the identical file, so the comparison is fair</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>
@@ -7897,6 +7958,19 @@ Missing cells: 0; infinite values: 0
 </div>
 </div>
 </div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=203bfe18">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><strong>How to read the output:</strong> 284,807 raw transactions with 492 frauds, which matches the published dataset.
+No cells are missing or infinite, so no values need filling. All checks passed, including the checksum
+against Phase 1.</p>
+</div>
+</div>
+</div>
+</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8b867da0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -7908,6 +7982,17 @@ we cannot prove that every duplicate is an accidental copy. Removing them avoids
 Keep this assumption visible when discussing results.</p>
 <p>Training = earliest 60%; validation = next 20%; test = last 20%.
 Training teaches the model. Validation controls stopping and cutoffs. Test reports the final comparison.</p>
+<p><strong>Why time order, not a random split:</strong> a deployed model learns from the past and scores the future.
+A random split would let training rows come from after test rows, which leaks future patterns and
+makes results look better than they would be in practice.</p>
+<p><strong>Order of operations in the code:</strong></p>
+<ol>
+<li><code>sort_values("Time", kind="stable")</code>: put rows in time order; rows with the same second keep their file order.</li>
+<li><code>drop_duplicates()</code>: keep the first copy of each exact repeat.</li>
+<li><code>iloc[:train_end]</code> and so on: cut by row position at 60% and 80%.</li>
+</ol>
+<p>Phase 1 cut at a <code>Time</code> value; here we cut at a row position. The <code>assert</code> lines prove both give
+the same rows: identical counts and fraud counts, and no period overlaps the next.</p>
 </div>
 </div>
 </div>
@@ -8029,6 +8114,50 @@ Training teaches the model. Validation controls stopping and cutoffs. Test repor
 </div>
 </div>
 </div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=3fce855c">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p><strong>How to read the table:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rows</code></td>
+<td>Transactions in that period</td>
+</tr>
+<tr>
+<td><code>frauds</code> / <code>legitimate</code></td>
+<td>Class 1 and class 0 counts</td>
+</tr>
+<tr>
+<td><code>fraud_rate_pct</code></td>
+<td>Frauds as a percentage of rows: the <strong>base rate</strong></td>
+</tr>
+<tr>
+<td><code>first_second</code> / <code>last_second</code></td>
+<td>Time range of the period, in seconds since the first transaction</td>
+</tr>
+</tbody>
+</table>
+<p>Cleaning removed <strong>1,081</strong> exact repeats (19 of them labelled fraud), leaving <strong>283,726</strong> rows and <strong>473</strong> frauds.</p>
+<p>The time ranges show the periods do not overlap: training ends at second 120,392 and validation starts at 120,393.
+Training covers about 33 hours, validation about 7 hours and test about 8 hours. They hold 60/20/20%
+of the <em>rows</em>, not of the hours, because night-time hours contain far fewer transactions.</p>
+<p>The base rate differs between periods (0.20%, 0.10%, 0.13%). Fraud does not arrive evenly over time,
+so precision on the test period depends on its own base rate.</p>
+<p>The line <code>Out[3]: 305</code> is only the number of characters written to <code>data_audit.json</code>; it is not a result.</p>
+</div>
+</div>
+</div>
+</div>
 <div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=268fd58a">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
@@ -8037,6 +8166,8 @@ Training teaches the model. Validation controls stopping and cutoffs. Test repor
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <h2 id="3.-Visual:-fraud-is-rare-and-its-frequency-changes">3. Visual: fraud is rare and its frequency changes<a class="anchor-link" href="#3.-Visual:-fraud-is-rare-and-its-frequency-changes">¶</a></h2><p>The left plot uses counts; the right uses percentages. Neither model is trained to maximize accuracy.
 At test prevalence, always predicting legitimate would be about 99.87% accurate while catching no fraud.</p>
+<p>The left plot uses a <strong>log scale</strong>: each step up the axis is ten times the previous one. On a normal
+scale the fraud bar would be almost invisible.</p>
 </div>
 </div>
 </div>
@@ -8084,6 +8215,14 @@ At test prevalence, always predicting legitimate would be about 99.87% accurate 
 <p><strong>Say in the viva:</strong> We train on the past and test on later transactions. The test has 74 frauds among
 56,746 transactions, so each detected fraud changes recall by about 1.35 percentage points.
 This is two days of historical data, not evidence of long-term bank performance.</p>
+<p><strong>Checkpoint before notebook 02:</strong></p>
+<ul>
+<li>Same file as Phase 1 (checksum verified): 284,807 rows, 492 frauds.</li>
+<li>After removing exact repeats: 283,726 rows, 473 frauds.</li>
+<li>Split 170,235 / 56,745 / 56,746 rows with 342 / 57 / 74 frauds, in time order with no overlap.</li>
+<li>Notebook 02 removes the 342 training frauds before fitting the scaler and both models.</li>
+</ul>
+<p><strong>Next:</strong> <code>02_Features_and_Scaling.ipynb</code> builds the 29 inputs from these split files.</p>
 </div>
 </div>
 </div>
